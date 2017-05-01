@@ -321,7 +321,7 @@ void setLatchingRelay(uint8_t power, uint8_t state)
 void setRelay(uint8_t power)
 {
   uint8_t state;
-  
+
   if ((SONOFF_DUAL == sysCfg.module) || (CH4 == sysCfg.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
@@ -463,7 +463,7 @@ void mqtt_publish(const char* topic, const char* data)
 void mqtt_publish_topic_P(uint8_t prefix, const char* subtopic, const char* data)
 {
   char romram[16];
-  char stopic[TOPSZ];  
+  char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !sysCfg.mqtt_response) ? PSTR("RESULT") : subtopic);
   prefix &= 1;
@@ -515,7 +515,7 @@ void mqtt_connected()
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER"), sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic);
     svalue[0] ='\0';
     mqtt_publish(stopic, svalue);
-    
+
     snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/#"), sysCfg.mqtt_prefix[0], sysCfg.mqtt_topic);
     mqttClient.subscribe(stopic);
     mqttClient.loop();  // Solve LmacRxBlk:1 messages
@@ -623,7 +623,7 @@ boolean mqtt_command(boolean grpflg, char *type, uint16_t index, char *dataBuf, 
   char stemp1[TOPSZ];
   char stemp2[10];
   uint16_t i;
-  
+
   if (!strcmp_P(type,PSTR("MQTTHOST"))) {
     if ((data_len > 0) && (data_len < sizeof(sysCfg.mqtt_host))) {
       strlcpy(sysCfg.mqtt_host, (1 == payload) ? MQTT_HOST : dataBuf, sizeof(sysCfg.mqtt_host));
@@ -814,7 +814,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     str = strstr(topic,sysCfg.mqtt_prefix[0]);
     if ((str == topic) && mqtt_cmnd_publish) {
       if (mqtt_cmnd_publish > 8) {
-        mqtt_cmnd_publish -= 8; 
+        mqtt_cmnd_publish -= 8;
       } else {
         mqtt_cmnd_publish = 0;
       }
@@ -1399,6 +1399,7 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
     else if ((pin[GPIO_DSB] < 99) && dsserial_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
       // Serviced
     }
+#endif // USE_DSSERIAL
 #ifdef DEBUG_THEO
     else if (!strcmp_P(type,PSTR("EXCEPTION"))) {
       if (data_len > 0) {
@@ -1437,7 +1438,7 @@ void send_button_power(byte key, byte device, byte state)
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), device);
   snprintf_P(stopic, sizeof(stopic), PSTR("%s/%s/POWER%s"),
     sysCfg.mqtt_prefix[0], (key) ? sysCfg.switch_topic : sysCfg.button_topic, (key || (Maxdevice > 1)) ? stemp1 : "");
-  
+
   if (3 == state) {
     svalue[0] = '\0';
   } else {
@@ -1614,7 +1615,7 @@ void publish_status(uint8_t payload)
 
   if (hlw_flg) {
     if ((0 == payload) || (8 == payload)) {
-      hlw_mqttStatus(svalue, sizeof(svalue));      
+      hlw_mqttStatus(svalue, sizeof(svalue));
       mqtt_publish_topic_P(option, PSTR("STATUS8"), svalue);
     }
 
@@ -1639,18 +1640,18 @@ void publish_status(uint8_t payload)
     snprintf_P(svalue, sizeof(svalue), PSTR("%s}"), svalue);
     mqtt_publish_topic_P(option, PSTR("STATUS11"), svalue);
   }
- 
+
 }
 
 void state_mqttPresent(char* svalue, uint16_t ssvalue)
 {
   char stemp1[8];
-  
+
   snprintf_P(svalue, ssvalue, PSTR("%s{\"Time\":\"%s\", \"Uptime\":%d"), svalue, getDateTime().c_str(), uptime);
 #ifdef USE_ADC_VCC
   dtostrf((double)ESP.getVcc()/1000, 1, 3, stemp1);
   snprintf_P(svalue, ssvalue, PSTR("%s, \"Vcc\":%s"), svalue, stemp1);
-#endif        
+#endif
   for (byte i = 0; i < Maxdevice; i++) {
     if (1 == Maxdevice) {  // Legacy
       snprintf_P(svalue, ssvalue, PSTR("%s, \"POWER\":"), svalue);
@@ -1713,7 +1714,7 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
     bh1750_mqttPresent(svalue, ssvalue, djson);
 #endif  // USE_BH1750
   }
-#endif  // USE_I2C      
+#endif  // USE_I2C
   snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
 
@@ -1888,7 +1889,7 @@ void stateloop()
   if (SONOFF_LED == sysCfg.module) {
     sl_animate();
   }
-  
+
 #ifdef USE_WS2812
   if (pin[GPIO_WS2812] < 99) {
     ws2812_animate();
@@ -2231,7 +2232,7 @@ void GPIO_init()
 
 //  snprintf_P(log, sizeof(log), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
 //  addLog(LOG_LEVEL_DEBUG, log);
-    
+
     if (mpin) {
       if ((mpin >= GPIO_REL1_INV) && (mpin <= GPIO_REL4_INV)) {
         rel_inverted[mpin - GPIO_REL1_INV] = 1;
@@ -2323,7 +2324,7 @@ void GPIO_init()
       analogWrite(pin[GPIO_PWM1 +i], sysCfg.pwmvalue[i]);
     }
   }
-  
+
   if (EXS_RELAY == sysCfg.module) {
     setLatchingRelay(0,2);
     setLatchingRelay(1,2);
@@ -2477,7 +2478,7 @@ void setup()
 void loop()
 {
   osw_loop();
-  
+
 #ifdef USE_WEBSERVER
   pollDnsWeb();
 #endif  // USE_WEBSERVER

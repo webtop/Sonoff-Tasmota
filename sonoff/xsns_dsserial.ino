@@ -103,9 +103,9 @@ boolean dsserial_read(uint8_t sensor, char **dest)
 
   for (int i = 0; i < 20; i++) serialdata[i] = ds->read();
   serialdata[19] = 0;
-  
+
   *dest = serialdata;
-  
+
   return true;
 }
 
@@ -118,7 +118,7 @@ boolean dsserial_write(uint8_t sensor, uint8_t *src)
 
   uint8_t l = strlen((char *)src)+1;
   uint8_t crc = OneWire::crc8(src, l);
-  
+
   ds->reset();
   ds->select(dsserial_addr[dsserial_idx[sensor]]);
   ds->write(W1_WRITE_SCRATCHPAD); // Write Scratchpad
@@ -126,7 +126,7 @@ boolean dsserial_write(uint8_t sensor, uint8_t *src)
     ds->write((uint8_t)src[i]);
   }
   ds->write(crc);
-  
+
   return true;
 }
 
@@ -150,9 +150,9 @@ void dsserial_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
       }
       dsxflg++;
       snprintf_P(svalue, ssvalue, PSTR("%s%s\"DSS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"String\":\"%s\"}"),
-        svalue, stemp1, i +1, ds18x20_type(i).c_str(), dsserial_address(i).c_str(), t);
+        svalue, stemp1, i +1, "DSSERIAL", dsserial_address(i).c_str(), t);
       strcpy(stemp1, ", ");
-    
+
   }
   if (dsxflg) snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
@@ -162,9 +162,9 @@ String dsserial_webPresent()
 {
   float t;
   String page = "";
-  
+
   int s = dsserial_sensors();
-  
+
   page += F("<tr><td>Num");
   page += String(s);
   page += F("<td><tr>");
@@ -194,12 +194,12 @@ boolean dsserial_command(char *type, uint16_t index, char *dataBuf, uint16_t dat
       if (dsserial_read(index, &t)){
         snprintf(svalue, ssvalue, "{\"DSSERIAL\":{\"DSS%d\":\"%s\"}}", index+1, t);
       }
-      
+
       serviced = true;
     }
   }
-  
-#ifdef OLDCODE  
+
+#ifdef OLDCODE
   if (!strcmp(type,"PIXELS")) {
     if ((data_len > 0) && (payload > 0) && (payload <= WS2812_MAX_LEDS)) {
       sysCfg.ws_pixels = payload;
@@ -292,8 +292,8 @@ boolean dsserial_command(char *type, uint16_t index, char *dataBuf, uint16_t dat
   else {
     serviced = false;  // Unknown command
   }
-#endif  
-  
+#endif
+
   return serviced;
 }
 
