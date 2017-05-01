@@ -171,7 +171,7 @@ String dsserial_webPresent()
     dsserial_write(i, (uint8_t *)"da"); // read all digitial pins
     char *t;
     if (dsserial_read(i, &t)) {   // Check if read failed
-      page += F("<tr><td>DS"); page += String(i +1); page += F(" Data: </td><td>"); page += t; page += F("</td></tr>");
+      page += F("<tr><th>DSS"); page += String(i +1); page += F(" Data: </th><td>"); page += t; page += F("</td></tr>");
     }
   }
   return page;
