@@ -481,6 +481,9 @@ void handleAjax2()
   if (pin[GPIO_DSB] < 99) {
     tpage += ds18x20_webPresent();
   }
+    #ifdef USE_DSSERIAL
+        if (pin[GPIO_DSB] < 99) tpage += dsserial_webPresent();
+    #endif
 #endif  // USE_DS18x20
 #ifdef USE_DHT
   if (dht_type) {

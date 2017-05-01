@@ -1395,6 +1395,10 @@ void mqttDataCb(char* topic, byte* data, unsigned int data_len)
       // Serviced
     }
 #endif  // USE_IR_REMOTE
+#ifdef USE_DSSERIAL
+    else if ((pin[GPIO_DSB] < 99) && dsserial_command(type, index, dataBuf, data_len, payload, svalue, sizeof(svalue))) {
+      // Serviced
+    }
 #ifdef DEBUG_THEO
     else if (!strcmp_P(type,PSTR("EXCEPTION"))) {
       if (data_len > 0) {
@@ -1684,6 +1688,9 @@ void sensors_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 #endif  // USE_DS18B20
 #ifdef USE_DS18x20
     ds18x20_mqttPresent(svalue, ssvalue, djson);
+    #ifdef USE_DSSERIAL
+        dsserial_mqttPresent(svalue, ssvalue, djson);
+    #endif  // USE_DSSERIAL
 #endif  // USE_DS18x20
   }
 #ifdef USE_DHT
@@ -1765,6 +1772,9 @@ void every_second()
 #ifdef USE_DS18x20
         ds18x20_search();      // Check for changes in sensors number
         ds18x20_convert();     // Start Conversion, takes up to one second
+    #ifdef USE_DSSERIAL
+            dsserial_search();      // Check for changes in sensors number
+    #endif  // USE_DSSERIAL
 #endif  // USE_DS18x20
       }
 #ifdef USE_DHT
@@ -2334,6 +2344,9 @@ void GPIO_init()
 #ifdef USE_DS18x20
   if (pin[GPIO_DSB] < 99) {
     ds18x20_init();
+    #ifdef USE_DSSERIAL
+    dsserial_init();
+    #endif  // USE_DS18x20
   }
 #endif  // USE_DS18x20
 
