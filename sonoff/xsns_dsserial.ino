@@ -142,9 +142,11 @@ void dsserial_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
 
   byte dsxflg = 0;
   for (byte i = 0; i < dsserial_sensors(); i++) {
+    dsserial_write(i, (uint8_t *)"da"); // read all digitial pins
     char *t = "";
     if (dsserial_read(i, &t)) {           // Check if read failed
-      snprintf_P(svalue, ssvalue, PSTR("%s, \"DSSERIAL\":{"), svalue);
+      if (!dsxflg) {
+        snprintf_P(svalue, ssvalue, PSTR("%s, \"DSSERIAL\":{"), svalue);
         *djson = 1;
         stemp1[0] = '\0';
       }
@@ -152,7 +154,7 @@ void dsserial_mqttPresent(char* svalue, uint16_t ssvalue, uint8_t* djson)
       snprintf_P(svalue, ssvalue, PSTR("%s%s\"DSS%d\":{\"Type\":\"%s\", \"Address\":\"%s\", \"String\":\"%s\"}"),
         svalue, stemp1, i +1, "DSSERIAL", dsserial_address(i).c_str(), t);
       strcpy(stemp1, ", ");
-
+    }
   }
   if (dsxflg) snprintf_P(svalue, ssvalue, PSTR("%s}"), svalue);
 }
@@ -165,11 +167,8 @@ String dsserial_webPresent()
 
   int s = dsserial_sensors();
 
-  page += F("<tr><td>Num");
-  page += String(s);
-  page += F("<td><tr>");
-
   for (byte i = 0; i < dsserial_sensors(); i++) {
+    dsserial_write(i, (uint8_t *)"da"); // read all digitial pins
     char *t;
     if (dsserial_read(i, &t)) {   // Check if read failed
       page += F("<tr><td>DS"); page += String(i +1); page += F(" Data: </td><td>"); page += t; page += F("</td></tr>");
