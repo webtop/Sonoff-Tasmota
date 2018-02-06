@@ -35,6 +35,10 @@ enum UserSelectablePins {
   GPIO_SWT2,
   GPIO_SWT3,
   GPIO_SWT4,
+  GPIO_SWT5,
+  GPIO_SWT6,
+  GPIO_SWT7,  
+  GPIO_SWT8, 
   GPIO_KEY1,           // Button usually connected to GPIO0
   GPIO_KEY2,
   GPIO_KEY3,
@@ -181,6 +185,7 @@ enum ProgramSelectablePins {
 
 // Supported hardware modules
 enum SupportedModules {
+#ifdef ESP8266  
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_SV,
@@ -221,13 +226,26 @@ enum SupportedModules {
   ARILUX_LC11,
   SONOFF_DUAL_R2,
   ARILUX_LC06,
+#endif
+#ifdef ESP32
+  WEMOS,
+#endif
   MAXMODULE };
 
 /********************************************************************************************/
 
+#ifdef ESP8266
 #define MAX_GPIO_PIN       18   // Number of supported GPIO
-
+#endif
+#ifdef ESP32
+#define MAX_GPIO_PIN       36   // Number of supported GPIO
+#endif
+#ifdef ESP8266
 const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcontrolD6D7D5D8D0A0";
+#endif
+#ifdef ESP32
+const char PINS_WEMOS[] PROGMEM = "000102030405060708091011121314151617181920212223242526272829303132333435";
+#endif
 
 typedef struct MYIO {
   uint8_t      io[MAX_GPIO_PIN];
@@ -239,6 +257,7 @@ typedef struct MYTMPLT {
 } mytmplt;
 
 const uint8_t kNiceList[MAXMODULE] PROGMEM = {
+#ifdef ESP8266  
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_TH,
@@ -279,10 +298,15 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,
   WEMOS,
   WITTY
+#endif
+#ifdef ESP32
+  WEMOS
+#endif   
 };
 
 // Default module settings
 const mytmplt kModules[MAXMODULE] PROGMEM = {
+#ifdef ESP8266  
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
@@ -818,6 +842,47 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 RGBW LED White
      0, 0
   }
+#endif
+#ifdef ESP32
+  { "WEMOS",         // Any ESP32 device like WeMos and NodeMCU hardware (ESP32)
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      0,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      0,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      0,
+      0,
+      0,
+      0,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER,
+      GPIO_USER
+  }
+#endif
 };
 
 /*

@@ -99,7 +99,7 @@ void HAssDiscovery()
 
         GetTopic_P(brightness_command_topic, CMND, Settings.mqtt_topic, D_CMND_DIMMER);
         snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_DIMMER, mqtt_data, brightness_command_topic, state_topic);
-
+#ifdef XDRV_LIGHT        
         if (light_subtype >= LST_RGB) {
           char rgb_command_topic[TOPSZ];
 
@@ -118,6 +118,10 @@ void HAssDiscovery()
           GetTopic_P(color_temp_command_topic, CMND, Settings.mqtt_topic, D_CMND_COLORTEMPERATURE);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_CT, mqtt_data, color_temp_command_topic, state_topic);
         }
+#ifdef ESP32
+#warning "Not ported"
+#endif
+#endif        
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }

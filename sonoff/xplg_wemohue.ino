@@ -25,7 +25,7 @@
 #define UDP_BUFFER_SIZE         200      // Max UDP buffer size needed for M-SEARCH message
 #define UDP_MSEARCH_SEND_DELAY  1500     // Delay in ms before M-Search response is send
 
-#include <Ticker.h>
+//#include <Ticker.h>
 Ticker TickerMSearch;
 
 boolean udp_connected = false;
@@ -60,7 +60,12 @@ String WemoSerialnumber()
 {
   char serial[16];
 
+#ifdef ESP8266        
   snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
+#endif        
+#ifdef ESP32    
+        snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getEfuseMac());
+#endif        
   return String(serial);
 }
 
@@ -86,7 +91,12 @@ void WemoRespondToMSearch(int echo_type)
     } else {                           // type2 echo 2g (echo, plus, show)
       response.replace("{r3", F("upnp:rootdevice"));
     }
+#ifdef ESP8266    
     PortUdp.write(response.c_str());
+#endif
+#ifdef ESP32   
+    PortUdp.write((const uint8_t *)(response.c_str()), strlen(response.c_str()));
+#endif
     PortUdp.endPacket();
     snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
   } else {
@@ -164,19 +174,34 @@ void HueRespondToMSearch()
     String response = response1;
     response += FPSTR(HUE_ST1);
     response.replace("{r3", HueUuid());
+#ifdef ESP8266
     PortUdp.write(response.c_str());
+#endif
+#ifdef ESP32
+    PortUdp.write((const uint8_t *)(response.c_str()), strlen(response.c_str()));
+#endif
     PortUdp.endPacket();
 
     response = response1;
     response += FPSTR(HUE_ST2);
     response.replace("{r3", HueUuid());
+#ifdef ESP8266
     PortUdp.write(response.c_str());
+#endif
+#ifdef ESP32
+    PortUdp.write((const uint8_t *)(response.c_str()), strlen(response.c_str()));
+#endif
     PortUdp.endPacket();
 
     response = response1;
     response += FPSTR(HUE_ST3);
     response.replace("{r3", HueUuid());
+#ifdef ESP8266    
     PortUdp.write(response.c_str());
+#endif
+#ifdef ESP32
+    PortUdp.write((const uint8_t *)(response.c_str()), strlen(response.c_str()));
+#endif
     PortUdp.endPacket();
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
@@ -197,7 +222,12 @@ void HueRespondToMSearch()
 boolean UdpDisconnect()
 {
   if (udp_connected) {
+#ifdef ESP8266    
     WiFiUDP::stopAll();
+#endif
+#ifdef ESP32
+#warning To port
+#endif
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
     udp_connected = false;
   }
@@ -207,7 +237,13 @@ boolean UdpDisconnect()
 boolean UdpConnect()
 {
   if (!udp_connected) {
+#ifdef ESP8266    
     if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
+#endif
+#ifdef ESP32
+// TODO: Check if it works
+    if (PortUdp.beginMulticast(ipMulticast, port_multicast)) {
+#endif      
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udp_response_mutex = false;
       udp_connected = true;
@@ -514,8 +550,13 @@ String GetHueDeviceId(uint8_t id)
 String GetHueUserId()
 {
   char userid[7];
-
+#ifdef ESP8266        
   snprintf_P(userid, sizeof(userid), PSTR("%03x"), ESP.getChipId());
+#endif        
+#ifdef ESP32    
+        snprintf_P(userid, sizeof(userid), PSTR("%03x"), ESP.getEfuseMac());
+#endif        
+  
   return String(userid);
 }
 
@@ -562,7 +603,9 @@ void HueLightStatus(byte device, String *response)
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
 
   if (light_type) {
+#ifdef XDRV_LIGHT  
     LightReplaceHsb(response);
+#endif    
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
@@ -674,7 +717,9 @@ void HueLights(String *path)
       }
 
       if (light_type) {
+#ifdef XDRV_LIGHT      
         LightGetHsb(&hue,&sat,&bri);
+#endif        
       }
 
       if (hue_json.containsKey("bri")) {
@@ -728,7 +773,9 @@ void HueLights(String *path)
       }
       if (change) {
         if (light_type) {
+#ifdef XDRV_LIGHT
           LightSetHsb(hue, sat, bri, ct);
+#endif          
         }
         change = false;
       }

@@ -73,7 +73,12 @@ void RtcSettingsSave()
 {
   if (GetRtcSettingsHash() != rtc_settings_hash) {
     RtcSettings.valid = RTC_MEM_VALID;
+#ifdef ESP8266    
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
+#endif
+#ifdef ESP32
+#warning "RTC not ported"
+#endif
     rtc_settings_hash = GetRtcSettingsHash();
 #ifdef DEBUG_THEO
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Save"));
@@ -84,7 +89,12 @@ void RtcSettingsSave()
 
 void RtcSettingsLoad()
 {
+#ifdef ESP8266  
   ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
+#endif  
+#ifdef ESP32
+#warning "RTC not ported"
+#endif
 #ifdef DEBUG_THEO
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Load"));
   RtcSettingsDump();
@@ -147,14 +157,27 @@ void RtcSettingsDump()
  * Config - Flash
 \*********************************************************************************************/
 
+#ifdef ESP8266
 extern "C" {
 #include "spi_flash.h"
 }
+
 #include "eboot_command.h"
+#endif
 
+#ifdef ESP8266
 extern "C" uint32_t _SPIFFS_end;
+#endif
 
+#ifndef ESP8266
+#define SPI_FLASH_SEC_SIZE 0
+#endif
+
+#ifdef ESP8266
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
+#else
+#define SPIFFS_END          0
+#endif
 
 // Version 3.x config
 #define SETTINGS_LOCATION_3 SPIFFS_END - 4
@@ -173,6 +196,7 @@ uint32_t settings_location = SETTINGS_LOCATION;
  */
 void SetFlashModeDout()
 {
+#ifdef ESP8266
   uint8_t *_buffer;
   uint32_t address;
 
@@ -191,6 +215,10 @@ void SetFlashModeDout()
     }
   }
   delete[] _buffer;
+#endif
+#ifdef ESP32
+#warning "SetFlashModeDout not ported"
+#endif
 }
 
 uint32_t GetSettingsHash()
@@ -251,6 +279,7 @@ void SettingsSave(byte rotate)
       }
     }
     Settings.save_flag++;
+#ifdef ESP8266     
     noInterrupts();
     spi_flash_erase_sector(settings_location);
     spi_flash_write(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
@@ -263,6 +292,17 @@ void SettingsSave(byte rotate)
         delay(1);
       }
     }
+#endif    
+#ifdef ESP32
+  noInterrupts();
+  nvs_handle handle;  
+  esp_err_t resultOpen = nvs_open("main", NVS_READWRITE, &handle);
+  size_t size = sizeof(SYSCFG);
+  esp_err_t resultSet = nvs_set_blob(handle, "Settings", (uint32*)&Settings, size);
+  esp_err_t resultCommit = nvs_commit(handle);
+  nvs_close(handle);
+  interrupts();
+#endif
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"),
        settings_location, Settings.save_flag, sizeof(SYSCFG));
     AddLog(LOG_LEVEL_DEBUG);
@@ -285,8 +325,23 @@ void SettingsLoad()
   for (byte i = 0; i < CFG_ROTATES; i++) {
     settings_location--;
     noInterrupts();
+#ifdef ESP8266        
     spi_flash_read(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     spi_flash_read((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
+#endif
+#ifdef ESP32
+  nvs_handle handle;  
+  esp_err_t resultOpen = nvs_open("main", NVS_READONLY, &handle);
+  {
+    size_t size = sizeof(SYSCFG);
+    esp_err_t resultGet = nvs_get_blob(handle, "Settings", (uint32*)&Settings, &size);
+  }
+  {
+    size_t size = sizeof(SYSCFGH);
+    esp_err_t resultGet = nvs_get_blob(handle, "SettingsH", (uint32*)&_SettingsH, &size);
+  }
+  nvs_close(handle);
+#endif
     interrupts();
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Check at %X with count %d and holder %X"), settings_location -1, _SettingsH.save_flag, _SettingsH.cfg_holder);
@@ -303,10 +358,29 @@ void SettingsLoad()
   if (Settings.cfg_holder != CFG_HOLDER) {
     // Auto upgrade
     noInterrupts();
+#ifdef ESP8266        
     spi_flash_read((SETTINGS_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
     if (Settings.save_flag < _SettingsH.save_flag)
       spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+#endif        
+#ifdef ESP32
+  nvs_handle handle;  
+  esp_err_t resultOpen = nvs_open("upg", NVS_READONLY, &handle);
+  {
+    size_t size = sizeof(SYSCFG);
+    esp_err_t resultGet = nvs_get_blob(handle, "Settings", (uint32*)&Settings, &size);
+  }
+  {
+    size_t size = sizeof(SYSCFGH);
+    esp_err_t resultGet = nvs_get_blob(handle, "SettingsH", (uint32*)&_SettingsH, &size);
+  }
+  nvs_close(handle);
+
+  //TODO32:
+  //check this: if (Settings.save_flag < _SettingsH.save_flag)
+  //upgrade memory not ported
+#endif
     interrupts();
     if ((Settings.cfg_holder != CFG_HOLDER) || (Settings.version >= 0x04020000)) {
       SettingsDefault();
@@ -320,6 +394,7 @@ void SettingsLoad()
 
 void SettingsErase()
 {
+#ifdef ESP8266  
   SpiFlashOpResult result;
 
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
@@ -345,6 +420,19 @@ void SettingsErase()
     }
     OsWatchLoop();
   }
+#endif  
+#ifdef ESP32
+  //TODO: add error checks
+  noInterrupts();
+  nvs_handle handle;  
+  esp_err_t resultOpen = nvs_open("main",  NVS_READWRITE, &handle);
+  esp_err_t resultErase = nvs_erase_all(handle);
+  esp_err_t resultCommit = nvs_commit(handle);
+  nvs_close(handle);
+  interrupts();
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_ERASE));
+  AddLog(LOG_LEVEL_DEBUG);
+#endif
 }
 
 void SettingsDump(char* parms)

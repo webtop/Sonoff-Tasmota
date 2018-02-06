@@ -2,6 +2,43 @@
 
 ESP32 port of Tasmota.
 
+## Working
+
+- Wifi
+- Flash (by NVS)
+- Relays
+- Webserver
+- MQTT
+
+Prepared for Wemos ESP32.
+
+## Not ported
+
+### Whole modules
+
+-USE_DISCOVERY
+-USE_MHZ19
+-USE_ENERGY_SENSOR
+-USE_SENSEAIR
+-USE_ADC_VCC
+-USE_ARILUX_RF
+-USE_IR_REMOTE
+-USE_WS2812
+-XDRV_LIGHT
+-SNFBRIDGE
+
+To compile #undef in user_config_override.h
+
+Additionally install:
+- [ESP32Ticker] (https://github.com/bertmelis/ESP32Ticker)
+- [WebServer-esp32] (https://github.com/zhouhan0126/WebServer-esp32)
+
+Additionally there should be added support of unigned long long in [WString] (https://github.com/espressif/arduino-esp32/issues/1066)
+
+### Partially not working
+
+In code there are marked parts with #warning
+
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 

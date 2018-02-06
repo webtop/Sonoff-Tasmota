@@ -1,3 +1,4 @@
+#ifdef SNFBRIDGE
 /*
   xdrv_04_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
 
@@ -20,6 +21,10 @@
 /*********************************************************************************************\
   Sonoff RF Bridge 433
 \*********************************************************************************************/
+
+#ifdef ESP32
+#error "Not ported"
+#endif
 
 #define SFB_TIME_AVOID_DUPLICATE  2000  // Milliseconds
 
@@ -304,4 +309,4 @@ boolean Xdrv04(byte function)
   }
   return result;
 }
-
+#endif

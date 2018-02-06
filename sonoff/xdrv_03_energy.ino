@@ -17,13 +17,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define USE_ENERGY_SENSOR
+//#define USE_ENERGY_SENSOR
 
 #ifdef USE_ENERGY_SENSOR
 /*********************************************************************************************\
  * HLW8012 and PZEM004T - Energy
 \*********************************************************************************************/
 
+#ifdef ESP32
+  #error "Not ported for ESP32 (due to Tasmota serial incompatibility)!"
+#endif
 #define FEATURE_POWER_LIMIT  true
 
 enum EnergyHardware { ENERGY_NONE, ENERGY_HLW8012, ENERGY_PZEM004T };

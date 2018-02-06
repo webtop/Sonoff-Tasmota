@@ -18,6 +18,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#ifdef ESP8266
 #include "wiring_private.h"
 #include "pins_arduino.h"
 #include "c_types.h"
@@ -219,3 +220,4 @@ extern void __analogWriteRange(uint32_t range)
 extern void analogWrite(uint8_t pin, int val) __attribute__ ((weak, alias("__analogWrite")));
 extern void analogWriteFreq(uint32_t freq) __attribute__ ((weak, alias("__analogWriteFreq")));
 extern void analogWriteRange(uint32_t range) __attribute__ ((weak, alias("__analogWriteRange")));
+#endif

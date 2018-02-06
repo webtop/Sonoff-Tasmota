@@ -304,8 +304,13 @@ const char HDR_CTYPE_STREAM[] PROGMEM = "application/octet-stream";
 #define DNS_PORT 53
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
 
+#ifdef ESP8266
 DNSServer *DnsServer;
 ESP8266WebServer *WebServer;
+#else
+#include "Update.h"
+WebServer *WebServer;
+#endif
 
 boolean remove_duplicate_access_points = true;
 int minimum_signal_quality = -1;
@@ -318,7 +323,11 @@ void StartWebserver(int type, IPAddress ipweb)
 {
   if (!webserver_state) {
     if (!WebServer) {
+#ifdef ESP8266      
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
+#else
+      WebServer = www;
+#endif
       WebServer->on("/", HandleRoot);
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
@@ -394,21 +403,30 @@ void WifiManagerBegin()
 
   StopWebserver();
 
+#ifdef ESP8266
   DnsServer = new DNSServer();
+#endif
+#ifdef ESP32
+#warning "DNS server not ported"
+#endif  
   WiFi.softAP(my_hostname);
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
+#ifdef ESP8266  
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
   DnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
+#endif  
 
   StartWebserver(HTTP_MANAGER, WiFi.softAPIP());
 }
 
 void PollDnsWebserver()
 {
+#ifdef ESP8266  
   if (DnsServer) {
     DnsServer->processNextRequest();
   }
+#endif  
   if (WebServer) {
     WebServer->handleClient();
   }
@@ -542,6 +560,7 @@ void HandleRoot()
 
     page += F("<div id='l1' name='l1'></div>");
     if (devices_present) {
+#ifdef ESP8266      
       if (light_type) {
         if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
           snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER1, LightGetColorTemp());
@@ -550,6 +569,7 @@ void HandleRoot()
         snprintf_P(line, sizeof(line), HTTP_MSG_SLIDER2, Settings.light_dimmer);
         page += line;
       }
+#endif      
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
@@ -560,6 +580,7 @@ void HandleRoot()
       }
       page += F("</tr></table>");
     }
+#ifdef ESP82666    
     if (SONOFF_BRIDGE == Settings.module) {
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
@@ -576,7 +597,7 @@ void HandleRoot()
       }
       page += F("</tr></table>");
     }
-
+#endif
     if (HTTP_ADMIN == webserver_state) {
       page += FPSTR(HTTP_BTN_MENU1);
       page += FPSTR(HTTP_BTN_RSTRT);
@@ -758,8 +779,14 @@ void HandleModuleConfiguration()
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (GPIO_USER == cmodule.gp.io[i]) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
+#ifdef ESP8266    
       snprintf_P(line, sizeof(line), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+#endif
+#ifdef ESP32
+      snprintf_P(line, sizeof(line), PSTR("<tr><td style='width:190'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126'><select id='g%d' name='g%d'></select></td></tr>"),
+        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN : "", i, i);
+#endif
       page += line;
       snprintf_P(line, sizeof(line), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
       func += line;
@@ -860,7 +887,12 @@ void HandleWifi(boolean scan)
           item.replace(F("{v}"), WiFi.SSID(indices[i]));
           item.replace(F("{r}"), rssiQ);
           uint8_t auth = WiFi.encryptionType(indices[i]);
+#ifdef ESP8266          
           item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F(D_WEP) : (ENC_TYPE_TKIP == auth) ? F(D_WPA_PSK) : (ENC_TYPE_CCMP == auth) ? F(D_WPA2_PSK) : (ENC_TYPE_AUTO == auth) ? F(D_AUTO) : F(""));
+#endif          
+#ifdef ESP32
+#warning "Not ported"
+#endif
           page += item;
           delay(0);
         } else {
@@ -1333,7 +1365,11 @@ void HandleUploadLoop()
       if (Settings.flag.mqtt_enabled) {
         MqttClient.disconnect();
       }
+#ifdef ESP8266      
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+#else
+      uint32_t maxSketchSpace = UPDATE_SIZE_UNKNOWN;
+#endif      
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
         upload_error = 2;
         return;
@@ -1358,10 +1394,15 @@ void HandleUploadLoop()
           return;
         }
         uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+#ifdef ESP8266        
         if(bin_flash_size > ESP.getFlashChipRealSize()) {
           upload_error = 4;
           return;
         }
+#endif        
+#ifdef ESP32
+#warning "Not ported"
+#endif
         upload.buf[2] = 3;  // Force DOUT - ESP8285
       }
     }
@@ -1651,12 +1692,20 @@ void HandleInformation()
 #endif // USE_DISCOVERY
 
   func += F("}1}2&nbsp;");  // Empty line
+#ifdef ESP8266  
   func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
   func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
   func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");
+#endif  
   func += F("}1" D_PROGRAM_FLASH_SIZE "}2"); func += String(ESP.getFlashChipSize() / 1024); func += F("kB");
+#ifdef ESP8266  
   func += F("}1" D_PROGRAM_SIZE "}2"); func += String(ESP.getSketchSize() / 1024); func += F("kB");
   func += F("}1" D_FREE_PROGRAM_SPACE "}2"); func += String(ESP.getFreeSketchSpace() / 1024); func += F("kB");
+#endif  
+
+#ifdef ESP32
+#warning "Not ported"
+#endif
   func += F("}1" D_FREE_MEMORY "}2"); func += String(freeMem / 1024); func += F("kB");
   func += F("</td></tr></table>");
   func += FPSTR(HTTP_SCRIPT_INFO_END);

@@ -1,3 +1,4 @@
+#ifdef XDRV_LIGHT
 /*
   xdrv_01_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
 
@@ -50,6 +51,10 @@
  * 12            yes     no         no          Fire
  *
 \*********************************************************************************************/
+
+#ifdef ESP32
+#error "XDRV_LIGHT not ported"
+#endif
 
 #define WS2812_SCHEMES       7    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
@@ -1253,3 +1258,4 @@ boolean Xdrv01(byte function)
   }
   return result;
 }
+#endif

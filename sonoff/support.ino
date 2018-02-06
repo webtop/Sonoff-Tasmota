@@ -49,7 +49,12 @@ void OsWatchTicker()
     RtcSettings.oswatch_blocked_loop = 1;
     RtcSettingsSave();
 //    ESP.restart();  // normal reboot
+#ifdef ESP8266
     ESP.reset();  // hard reset
+#endif    
+#ifdef ESP32
+    ESP.restart();
+#endif
   }
 }
 
@@ -74,7 +79,11 @@ String GetResetReason()
     strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
   } else {
+#ifdef ESP8266    
     return ESP.getResetReason();
+#else
+    return String(get_reset_reason(0));
+#endif    
   }
 }
 
@@ -291,9 +300,11 @@ boolean WifiConfigCounter()
   return (wifi_config_counter);
 }
 
+#ifdef ESP8266
 extern "C" {
 #include "user_interface.h"
 }
+#endif
 
 void WifiWpsStatusCallback(wps_cb_status status);
 
@@ -308,6 +319,7 @@ void WifiWpsStatusCallback(wps_cb_status status)
     WPS_CB_ST_SCAN_ERR, // can not find the target WPS AP
   };
 */
+#ifdef ESP8266
   wps_result = status;
   if (WPS_CB_ST_SUCCESS == wps_result) {
     wifi_wps_disable();
@@ -316,6 +328,10 @@ void WifiWpsStatusCallback(wps_cb_status status)
     AddLog(LOG_LEVEL_DEBUG);
     wifi_config_counter = 2;
   }
+#endif  
+#ifdef ESP32
+#warning "WifiWpsStatusCallback not ported"
+#endif
 }
 
 boolean WifiWpsConfigDone(void)
@@ -325,6 +341,7 @@ boolean WifiWpsConfigDone(void)
 
 boolean WifiWpsConfigBegin(void)
 {
+#ifdef ESP8266  
   wps_result = 99;
   if (!wifi_wps_disable()) {
     return false;
@@ -339,6 +356,10 @@ boolean WifiWpsConfigBegin(void)
     return false;
   }
   return true;
+#else
+#warning "WifiWpsConfigBegin not ported"
+  return false;  
+#endif
 }
 
 void WifiConfig(uint8_t type)
@@ -395,7 +416,12 @@ void WifiBegin(uint8_t flag)
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);      // Disable AP mode
   if (Settings.sleep) {
+#ifdef ESP8266    
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+#endif    
+#ifdef ESP32
+#warning "WiFi.setSleepMode(WIFI_LIGHT_SLEEP) not ported"
+#endif
   }
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) {
 //    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
@@ -418,11 +444,20 @@ void WifiBegin(uint8_t flag)
   if (Settings.ip_address[0]) {
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
+#ifdef ESP8266  
   WiFi.hostname(my_hostname);
+#else
+  WiFi.setHostname(my_hostname);
+#endif  
   WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
+#ifdef ESP8266  
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
   AddLog(LOG_LEVEL_INFO);
+#endif
+#ifdef ESP32
+#warning "Not ported"
+#endif  
 }
 
 void WifiCheckIp()
@@ -812,9 +847,16 @@ boolean I2cDevice(byte addr)
  *          Timezone by Jack Christensen (https://github.com/JChristensen/Timezone)
 \*********************************************************************************************/
 
+#ifdef ESP8266
 extern "C" {
 #include "sntp.h"
 }
+#endif
+#ifdef ESP32
+#include "time.h"
+#include "sys/time.h"
+#include "apps/sntp/sntp.h"
+#endif
 
 #define SECS_PER_MIN  ((uint32_t)(60UL))
 #define SECS_PER_HOUR ((uint32_t)(3600UL))
@@ -1010,15 +1052,63 @@ uint32_t RuleToTime(TimeChangeRule r, int yr)
     return t;
 }
 
+#ifdef ESP32
+static void obtain_time(void)
+{
+    // wait for time to be set
+    time_t now = 0;
+    struct tm timeinfo = { 0 };
+    int retry = 0;
+    const int retry_count = 10;
+    while(timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count) {
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        time(&now);
+        localtime_r(&now, &timeinfo);
+    }
+}
+
+time_t check_get_time(void)
+{
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    // Is time set? If not, tm_year will be (1970 - 1900).
+    if (timeinfo.tm_year < (2016 - 1900)) {
+        obtain_time();
+        // update 'now' variable with current time
+        time(&now);
+    }
+    char strftime_buf[64];
+
+    // Set timezone to Eastern Standard Time and print local time
+    setenv("TZ", "EST5EDT,M3.2.0/2,M11.1.0", 1);
+    tzset();
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+
+    return now;
+}
+#endif
 String GetTime(int type)
 {
   char stime[25];   // Skip newline
 
+#ifdef ESP8266  
   uint32_t time = utc_time;
   if (1 == type) time = local_time;
   if (2 == type) time = daylight_saving_time;
   if (3 == type) time = standard_time;
   snprintf_P(stime, sizeof(stime), sntp_get_real_time(time));
+#endif  
+#ifdef ESP32
+#warning "1,2,3 not ported"
+  time_t now;
+  time(&now);
+  struct tm timeinfo;
+  localtime_r(&now, &timeinfo);
+  strftime(stime, sizeof(stime), "%c", &timeinfo); 
+#endif
   return String(stime);
 }
 
@@ -1059,7 +1149,12 @@ void RtcSecond()
     }
   }
   if (ntpsync) {
+#ifdef ESP8266    
     ntp_time = sntp_get_current_timestamp();
+#endif    
+#ifdef ESP32
+    ntp_time = check_get_time();
+#endif
     if (ntp_time) {
       utc_time = ntp_time;
       BreakTime(utc_time, tmpTime);
@@ -1108,7 +1203,12 @@ void RtcInit()
   sntp_setservername(1, Settings.ntp_server[1]);
   sntp_setservername(2, Settings.ntp_server[2]);
   sntp_stop();
+#ifdef ESP8266    
   sntp_set_timezone(0);      // UTC time
+#endif  
+#ifdef ESP32
+#warning "Not ported"
+#endif 
   sntp_init();
   utc_time = 0;
   BreakTime(utc_time, RtcTime);
@@ -1308,7 +1408,12 @@ void Syslog()
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
+#ifdef ESP8266    
     PortUdp.write(log_data);
+#endif    
+#ifdef ESP32   
+    PortUdp.write((const uint8_t *)(log_data), strlen(log_data));
+#endif 
     PortUdp.endPacket();
   } else {
     syslog_level = 0;

@@ -43,17 +43,38 @@
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1000"
 #endif
 
+#ifdef ESP8266
 #include <Ticker.h>                         // RTC, Energy, OSWatch
+#endif
+#ifdef ESP32
+#include <ESP32Ticker.h>
+#endif
+#ifdef ESP8266
 #include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
 #include <ESP8266HTTPClient.h>              // MQTT, Ota
 #include <ESP8266httpUpdate.h>              // Ota
+#endif
+#ifdef ESP32
+#include <WiFi.h>
+#include <WiFiClient.h>
+#endif
 #include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
 #ifdef USE_WEBSERVER
+#ifdef ESP8266
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
   #include <DNSServer.h>                    // WifiManager
+#endif  
+#ifdef ESP32
+  #include <WebServer.h>
+// WebServer same ESP32 class and variable name   
+  WebServer *www = new WebServer(80);
+#endif
 #endif  // USE_WEBSERVER
 #ifdef USE_DISCOVERY
+  #ifdef ESP32
+    #error "Not ported for ESP32!"
+  #endif
   #include <ESP8266mDNS.h>                  // MQTT, Webserver
 #endif  // USE_DISCOVERY
 #ifdef USE_I2C
@@ -63,6 +84,9 @@
   #include <SPI.h>                          // SPI support, TFT
 #endif  // USE_SPI
 
+#ifdef ESP32
+  #include <nvs.h>
+#endif
 // Structs
 #include "settings.h"
 
@@ -159,7 +183,13 @@ byte syslog_level;                          // Current copy of Settings.syslog_l
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 byte seriallog_level;                       // Current copy of Settings.seriallog_level
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
+#ifdef ESP8266
 uint8_t sleep;                              // Current copy of Settings.sleep
+#endif
+#ifdef ESP32
+// same name of sleep and sleep()
+uint8_t ssleep;                              // Current copy of Settings.sleep
+#endif
 uint8_t stop_flash_rotate = 0;              // Allow flash configuration rotation
 
 int blinks = 201;                           // Number of LED blinks
@@ -214,7 +244,12 @@ void GetMqttClient(char* output, const char* input, byte size)
       digits = atoi(token);
       if (digits) {
         snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
+#ifdef ESP8266        
         snprintf_P(output, size, output, ESP.getChipId());
+#endif        
+#ifdef ESP32    
+        snprintf_P(output, size, output, ESP.getEfuseMac());
+#endif        
       }
     }
   }
@@ -310,6 +345,7 @@ void SetDevicePower(power_t rpower)
 
   XdrvSetPower(rpower);
 
+#ifdef ESP8266
   if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
     Serial.write(0xA0);
     Serial.write(0x04);
@@ -318,10 +354,14 @@ void SetDevicePower(power_t rpower)
     Serial.write('\n');
     Serial.flush();
   }
+#endif  
+#ifdef ESP8266
   else if (EXS_RELAY == Settings.module) {
     SetLatchingRelay(rpower, 1);
   }
-  else {
+  else 
+#endif    
+  {
     for (byte i = 0; i < devices_present; i++) {
       state = rpower &1;
       if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
@@ -455,6 +495,14 @@ void MqttPublishPowerBlinkState(byte device)
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, S_RSLT_POWER);
 }
 
+#ifdef ESP32
+#include <rom/rtc.h>
+
+int get_reset_reason(int icore) { 
+   return (int) rtc_get_reset_reason( (RESET_REASON) icore);  
+}
+#endif
+
 void MqttConnected()
 {
   char stopic[TOPSZ];
@@ -490,8 +538,14 @@ void MqttConnected()
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
     }
 #endif  // USE_WEBSERVER
+#ifdef ESP8266
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"),
       (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
+#endif
+#ifdef ESP32
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"),
+      String(get_reset_reason(0)).c_str());      
+#endif      
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     if (Settings.tele_period) {
       tele_period = Settings.tele_period -9;
@@ -933,6 +987,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       mqtt_data[0] = '\0';
       MqttShowState();
     }
+#ifdef ESP8266    
     else if ((CMND_POWERONSTATE == command_code) && (Settings.module != MOTOR)) {
       /* 0 = Keep relays off after power on
        * 1 = Turn relays on after power on, if PulseTime set wait for PulseTime seconds, and turn relays off
@@ -951,6 +1006,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.poweronstate);
     }
+#endif    
     else if ((CMND_PULSETIME == command_code) && (index > 0) && (index <= MAX_PULSETIMERS)) {
       if (data_len > 0) {
         Settings.pulse_timer[index -1] = payload16;  // 0 - 65535
@@ -1240,7 +1296,12 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
           restart_flag = 2;
         }
         Settings.sleep = payload;
+#ifdef ESP8266
         sleep = payload;
+#endif        
+#ifdef ESP32
+        ssleep = payload;        
+#endif        
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
     }
@@ -1720,9 +1781,19 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (2 == payload)) {
+#ifdef ESP8266    
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\"}}"),
       my_version, GetBuildDateAndTime().c_str(), ESP.getBootVersion(), ESP.getSdkVersion());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
+#endif
+#ifdef ESP32
+// TODO32
+/*
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\"" D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\"}}"),
+      my_version, GetBuildDateAndTime().c_str(), ESP.getBootVersion(), ESP.getSdkVersion());
+    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2")); 
+*/    
+#endif    
   }
 
   if ((0 == payload) || (3 == payload)) {
@@ -1732,9 +1803,19 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (4 == payload)) {
+#ifdef ESP8266    
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHMODE "\":%d}}"),
       ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipMode());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
+#endif   
+#ifdef ESP32
+//TODO32
+/*
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHMODE "\":%d}}"),
+      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipMode());
+    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
+*/    
+#endif
   }
 
   if ((0 == payload) || (5 == payload)) {
@@ -1794,6 +1875,7 @@ void MqttShowState()
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
 
+#ifdef ESP8266
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
       LightState(1);
@@ -1801,6 +1883,7 @@ void MqttShowState()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
     }
   }
+#endif      
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_APMAC_ADDRESS "\":\"%s\"}}"),
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
@@ -1921,6 +2004,7 @@ void ButtonHandler()
     button = NOT_PRESSED;
     button_present = 0;
 
+#ifdef ESP8266
     if (!i && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
       button_present = 1;
       if (dual_button_code) {
@@ -1932,7 +2016,9 @@ void ButtonHandler()
         }
         dual_button_code = 0;
       }
-    } else {
+    } else 
+#endif    
+    {
       if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0) {
         button_present = 1;
         button = digitalRead(pin[GPIO_KEY1 +i]);
@@ -1940,6 +2026,7 @@ void ButtonHandler()
     }
 
     if (button_present) {
+#ifdef ESP8266
       if (SONOFF_4CHPRO == Settings.module) {
         if (holdbutton[i]) {
           holdbutton[i]--;
@@ -1963,7 +2050,9 @@ void ButtonHandler()
             ExecuteCommandPower(i +1, POWER_TOGGLE);  // Execute Toggle command internally
           }
         }
-      } else {
+      } else 
+#endif      
+      {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
           if (Settings.flag.button_single) {          // Allow only single button press for immediate action
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " %d " D_IMMEDIATE), i +1);
@@ -2010,9 +2099,12 @@ void ButtonHandler()
             if (!restart_flag && !holdbutton[i] && (multipress[i] > 0) && (multipress[i] < MAX_BUTTON_COMMANDS +3)) {
               boolean single_press = false;
               if (multipress[i] < 3) {                // Single or Double press
+#ifdef ESP8266              
                 if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
                   single_press = true;
-                } else  {
+                } else  
+#endif                
+                {
                   single_press = (Settings.flag.button_swap +1 == multipress[i]);
                   multipress[i] = 1;
                 }
@@ -2235,9 +2327,11 @@ void StateLoop()
     } else {
       if (Settings.ledstate &1) {
         boolean tstate = power;
+#ifdef ESP8266        
         if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
           tstate = (!power) ? 1 : 0;
         }
+#endif        
         SetLedPower(tstate);
       }
     }
@@ -2255,7 +2349,9 @@ void StateLoop()
         ota_url = Settings.ota_url;
         RtcSettings.ota_loader = 0;  // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
+#ifdef ESP8266        
         ESPhttpUpdate.rebootOnUpdate(false);
+#endif        
         SettingsSave(1);  // Free flash for OTA update
       }
       if (ota_state_flag <= 0) {
@@ -2287,15 +2383,22 @@ void StateLoop()
 #endif  // BE_MINIMAL
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "%s"), ota_url);
           AddLog(LOG_LEVEL_DEBUG);
+#ifdef ESP32
+#warning "Not ported"
+#endif
+#ifdef ESP8266          
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(ota_url));
+#endif          
           if (!ota_result) {
 #ifndef BE_MINIMAL
+#ifdef ESP8266
             int ota_error = ESPhttpUpdate.getLastError();
 //            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
 //            AddLog(LOG_LEVEL_DEBUG);
             if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
               RtcSettings.ota_loader = 1;  // Try minimal image next
             }
+#endif                          
 #endif  // BE_MINIMAL
             ota_state_flag = 2;    // Upgrade failed - retry
           }
@@ -2307,7 +2410,9 @@ void StateLoop()
           SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
         } else {
+#ifdef ESP8266          
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
+#endif          
         }
         restart_flag = 2;          // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_UPGRADE));
@@ -2390,6 +2495,7 @@ void SerialInput()
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff dual and ch4 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
+#ifdef ESP8266
     if ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
       if (dual_hex_code) {
         dual_hex_code--;
@@ -2408,10 +2514,11 @@ void SerialInput()
         dual_hex_code = 3;
       }
     }
-
+#endif
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff bridge 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
+#ifdef ESP8266
     if (SONOFF_BRIDGE == Settings.module) {
       if (SonoffBridgeSerialInput()) {
         serial_in_byte_counter = 0;
@@ -2419,7 +2526,7 @@ void SerialInput()
         return;
       }
     }
-
+#endif
 /*-------------------------------------------------------------------------------------------*/
 
     if (serial_in_byte > 127) {                // binary data...
@@ -2440,7 +2547,9 @@ void SerialInput()
 \*-------------------------------------------------------------------------------------------*/
     if (serial_in_byte == '\x1B') {            // Sonoff SC status from ATMEGA328P
       serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+#ifdef ESP8266      
       SonoffScSerialInput(serial_in_buffer);
+#endif      
       serial_in_byte_counter = 0;
       Serial.flush();
       return;
@@ -2523,7 +2632,9 @@ void GpioInit()
   }
 
   if (2 == pin[GPIO_TXD]) {
+#ifdef ESP8266    
     Serial.set_tx(2);
+#endif    
   }
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
@@ -2563,7 +2674,7 @@ void GpioInit()
       }
     }
   }
-
+#ifdef ESP8266
   if (SONOFF_BRIDGE == Settings.module) {
     baudrate = 19200;
   }
@@ -2603,10 +2714,25 @@ void GpioInit()
       }
     }
   }
+#endif
+#ifdef ESP32
+    devices_present = 0;
+    for (byte i = 0; i < MAX_RELAYS; i++) {
+      if (pin[GPIO_REL1 +i] < 99) {
+        pinMode(pin[GPIO_REL1 +i], OUTPUT);
+        devices_present++;
+      }
+    }
+#endif
 
   for (byte i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
+#ifdef ESP8266    
       pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
+#endif      
+#ifdef ESP32
+      pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
+#endif
     }
   }
   for (byte i = 0; i < MAX_LEDS; i++) {
@@ -2617,7 +2743,12 @@ void GpioInit()
   }
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
+#ifdef ESP8266
       pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 :INPUT_PULLUP);
+#endif
+#ifdef ESP32      
+      pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
+#endif      
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
   }
@@ -2632,15 +2763,22 @@ void GpioInit()
     for (byte i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+#ifdef ESP8266        
         analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
+#endif
+#ifdef ESP32
+#warning "Not ported"
+#endif
       }
     }
   }
 
+#ifdef ESP8266
   if (EXS_RELAY == Settings.module) {
     SetLatchingRelay(0,2);
     SetLatchingRelay(1,2);
   }
+#endif  
   SetLedPower(Settings.ledstate &8);
 
   XdrvCall(FUNC_INIT);
@@ -2682,7 +2820,11 @@ void setup()
   syslog_level = (Settings.flag2.emulation) ? 0 : Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;
   save_data_counter = Settings.save_data;
+#ifdef ESP8266  
   sleep = Settings.sleep;
+#else  
+  ssleep = Settings.sleep;
+#endif
 
   Settings.bootcount++;
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
@@ -2694,21 +2836,32 @@ void setup()
 
   if (strstr(Settings.hostname, "%")) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+#ifdef ESP8266    
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, Settings.mqtt_topic, ESP.getChipId() & 0x1FFF);
+#else
+    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, Settings.mqtt_topic, 0 & 0x1FFF);
+#endif    
   } else {
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname);
   }
   WifiConnect();
 
   GetMqttClient(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
-
+#ifdef ESP8266
   if (MOTOR == Settings.module) {
     Settings.poweronstate = POWER_ALL_ON;  // Needs always on else in limbo!
   }
+#endif
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
     SetDevicePower(1);
   } else {
+#ifdef ESP8266    
     if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
+#endif             
+#ifdef ESP32 
+    if (1>0) {
+#warning "Not ported"
+#endif         
       switch (Settings.poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
@@ -2789,5 +2942,27 @@ void loop()
   }
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop
+#ifdef ESP8266
+
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
+#else
+  delay(ssleep);  // https://github.com/esp8266/Arduino/issues/2021
+#endif  
 }
+
+#ifdef ESP32
+#define wps_cb_status int
+#endif
+
+#ifdef ESP32
+#warning "Analog write not ported"
+void analogWrite(int a, int b) {}
+void analogWriteFreq(uint32_t freq) {}
+void analogWriteRange(uint32_t freq) {}
+#endif
+
+#ifdef ESP32
+#define uint32 unsigned int
+#endif
+
+

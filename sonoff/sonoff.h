@@ -29,8 +29,14 @@
  * Power Type
 \*********************************************************************************************/
 
+#ifdef ESP8266
 typedef unsigned long power_t;              // Power (Relay) type
 #define POWER_MASK             0xffffffffUL // Power (Relay) full mask
+#endif
+#ifdef ESP32
+typedef unsigned long long power_t;                   // Power (Relay) type
+#define POWER_MASK             0xffffffffffffffff // Power (Relay) full mask
+#endif
 
 /*********************************************************************************************\
  * Defines
@@ -40,7 +46,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_RELAYS             8            // Max number of relays
 #define MAX_LEDS               4            // Max number of leds
 #define MAX_KEYS               4            // Max number of keys or buttons
-#define MAX_SWITCHES           4            // Max number of switches
+#define MAX_SWITCHES           8            // Max number of switches
 #define MAX_PWMS               5            // Max number of PWM channels
 #define MAX_COUNTERS           4            // Max number of counter sensors
 #define MAX_PULSETIMERS        8            // Max number of supported pulse timers
@@ -48,7 +54,12 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_DOMOTICZ_IDX       4            // Max number of Domoticz device, key and switch indices
 #define MAX_DOMOTICZ_SNS_IDX   12           // Max number of Domoticz sensors indices
 
+#ifdef ESP8266
 #define MODULE                 SONOFF_BASIC // [Module] Select default model
+#endif
+#ifdef ESP32
+#define MODULE                 WEMOS // [Module] Select default model
+#endif
 
 #define MQTT_TOKEN_PREFIX      "%prefix%"   // To be substituted by mqtt_prefix[x]
 #define MQTT_TOKEN_TOPIC       "%topic%"    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
