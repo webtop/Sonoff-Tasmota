@@ -28,7 +28,9 @@
 #define VERSION                0x050B010A   // 5.11.1j
 
 // Location specific includes
+#ifdef ESP8266
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#endif
 #include "sonoff.h"                         // Enumeration used in user_config.h
 #include "user_config.h"                    // Fixed user configurable options
 #include "user_config_override.h"           // Configuration overrides for user_config.h
@@ -58,6 +60,7 @@
 #ifdef ESP32
 #include <WiFi.h>
 #include <WiFiClient.h>
+#define getChipId() getEfuseMac()
 #endif
 #include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
@@ -137,7 +140,12 @@ const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 
 // Global variables
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
+#ifdef ESP8266
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
+#endif
+#ifdef ESP32
+#define serial_config SERIAL_8N1
+#endif
 byte serial_in_byte;                        // Received byte
 int serial_in_byte_counter = 0;             // Index in receive buffer
 byte dual_hex_code = 0;                     // Sonoff dual input flag
@@ -252,12 +260,7 @@ void GetMqttClient(char* output, const char* input, byte size)
       digits = atoi(token);
       if (digits) {
         snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
-#ifdef ESP8266        
         snprintf_P(output, size, output, ESP.getChipId());
-#endif 
-#ifdef ESP32    
-        snprintf_P(output, size, output, ESP.getEfuseMac());
-#endif 
       }
     }
   }
@@ -2011,12 +2014,8 @@ void ButtonHandler()
     button = NOT_PRESSED;
     button_present = 0;
 
-<<<<<<< HEAD
 #ifdef ESP8266
-    if (!i && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
-=======
     if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
->>>>>>> upstream/development
       button_present = 1;
       if (dual_button_code) {
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
@@ -2026,16 +2025,10 @@ void ButtonHandler()
           holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
         }
         dual_button_code = 0;
-      }
-<<<<<<< HEAD
-    } else 
-#endif 
+      } else 
+#endif         
     {
-      if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0) {
-=======
-    } else {
       if ((pin[GPIO_KEY1 +button_index] < 99) && !blockgpio0) {
->>>>>>> upstream/development
         button_present = 1;
         button = digitalRead(pin[GPIO_KEY1 +button_index]);
       }
@@ -2067,15 +2060,10 @@ void ButtonHandler()
             ExecuteCommandPower(button_index +1, POWER_TOGGLE);  // Execute Toggle command internally
           }
         }
-<<<<<<< HEAD
       } else 
 #endif 
       {
-        if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
-=======
-      } else {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
->>>>>>> upstream/development
           if (Settings.flag.button_single) {          // Allow only single button press for immediate action
             snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
             AddLog(LOG_LEVEL_DEBUG);
@@ -2120,24 +2108,15 @@ void ButtonHandler()
           } else {
             if (!restart_flag && !holdbutton[button_index] && (multipress[button_index] > 0) && (multipress[button_index] < MAX_BUTTON_COMMANDS +3)) {
               boolean single_press = false;
-<<<<<<< HEAD
-              if (multipress[i] < 3) {                // Single or Double press
-#ifdef ESP8266              
-                if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
-                  single_press = true;
-                } else  
-#endif 
-                {
-                  single_press = (Settings.flag.button_swap +1 == multipress[i]);
-                  multipress[i] = 1;
-=======
               if (multipress[button_index] < 3) {                // Single or Double press
+#ifdef ESP8266
                 if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
                   single_press = true;
-                } else  {
+                } else 
+#endif                
+                {
                   single_press = (Settings.flag.button_swap +1 == multipress[button_index]);
                   multipress[button_index] = 1;
->>>>>>> upstream/development
                 }
               }
               if (single_press && send_button_power(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
@@ -2548,11 +2527,10 @@ void SerialInput()
         dual_hex_code = 3;
       }
     }
-#endif
+
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff bridge 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
-#ifdef ESP8266
     if (SONOFF_BRIDGE == Settings.module) {
       if (SonoffBridgeSerialInput()) {
         serial_in_byte_counter = 0;
@@ -2560,9 +2538,6 @@ void SerialInput()
         return;
       }
     }
-<<<<<<< HEAD
-#endif
-=======
 
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff S31 4800 baud serial interface
@@ -2574,8 +2549,7 @@ void SerialInput()
         return;
       }
     }
-
->>>>>>> upstream/development
+#endif
 /*-------------------------------------------------------------------------------------------*/
 
     if (serial_in_byte > 127) {                // binary data...
@@ -2886,11 +2860,7 @@ void setup()
 
   if (strstr(Settings.hostname, "%")) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
-#ifdef ESP8266    
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, Settings.mqtt_topic, ESP.getChipId() & 0x1FFF);
-#else
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, Settings.mqtt_topic, 0 & 0x1FFF);
-#endif 
   } else {
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname);
   }

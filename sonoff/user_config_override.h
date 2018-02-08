@@ -59,10 +59,12 @@
 #undef USE_SENSEAIR
 #undef USE_ADC_VCC
 #undef USE_ARILUX_RF
-#undef USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
+#undef USE_IR_REMOTE                             // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
+#undef USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)                             (TasmotaSerial)
+#undef USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)                                                        (TasmotaSerial)
  
 // TO TEST COMPILATION:
-//#define TEST_ALL
+#define TEST_ALL
 
 #ifdef TEST_ALL
   #define USE_DHT

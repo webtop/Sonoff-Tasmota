@@ -180,14 +180,11 @@ enum SupportedModules {
   ARILUX_LC11,
   SONOFF_DUAL_R2,
   ARILUX_LC06,
-<<<<<<< HEAD
+  SONOFF_S31,
 #endif
 #ifdef ESP32
   WEMOS,
 #endif
-=======
-  SONOFF_S31,
->>>>>>> upstream/development
   MAXMODULE };
 
 /********************************************************************************************/

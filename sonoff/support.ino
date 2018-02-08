@@ -1313,24 +1313,10 @@ void RtcSecond()
   uint32_t dstoffset;
   TIME_T tmpTime;
 
-<<<<<<< HEAD
-  ntpsync = 0;
-  if (RtcTime.year < 2016) {
-    if (WL_CONNECTED == WiFi.status()) {
-      ntpsync = 1;  // Initial NTP sync
-    }
-  } else {
-    if ((1 == RtcTime.minute) && (1 == RtcTime.second)) {
-      ntpsync = 1;  // Hourly NTP sync at xx:01:01
-    }
-  }
-  if (ntpsync) {
-#ifdef ESP8266    
-=======
   if ((ntp_sync_minute > 59) && (3 == RtcTime.minute)) ntp_sync_minute = 1;                // If sync prepare for a new cycle
   uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
   if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
->>>>>>> upstream/development
+#ifdef ESP8266    
     ntp_time = sntp_get_current_timestamp();
 #endif    
 #ifdef ESP32

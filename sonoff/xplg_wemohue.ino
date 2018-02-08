@@ -60,12 +60,7 @@ String WemoSerialnumber()
 {
   char serial[16];
 
-#ifdef ESP8266        
   snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
-#endif        
-#ifdef ESP32    
-        snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getEfuseMac());
-#endif        
   return String(serial);
 }
 
