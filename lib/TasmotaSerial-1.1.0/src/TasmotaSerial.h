@@ -28,7 +28,9 @@
 #define TM_SERIAL_BAUDRATE           9600   // Max supported baudrate
 #define TM_SERIAL_BUFFER_SIZE        64     // Receive buffer size
 
+#ifdef ESP8266
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+#endif
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0
   #define TM_SERIAL_USE_IRAM                // Enable to use iram (+368 bytes)
 #endif

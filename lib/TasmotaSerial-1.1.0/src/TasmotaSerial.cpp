@@ -19,12 +19,26 @@
 
 #include <Arduino.h>
 
+#ifdef ESP8266
 // The Arduino standard GPIO routines are not enough,
 // must use some from the Espressif SDK as well
 extern "C" {
 #include "gpio.h"
 }
+#endif
+#ifdef ESP32
+#ifdef ICACHE_FLASH
+#define ICACHE_FLASH_ATTR   __attribute__((section(".irom0.text")))
+#define ICACHE_RAM_ATTR     __attribute__((section(".iram.text")))
+#define ICACHE_RODATA_ATTR  __attribute__((section(".irom.text")))
+#else
+#define ICACHE_FLASH_ATTR
+#define ICACHE_RAM_ATTR
+#define ICACHE_RODATA_ATTR
+#endif /* ICACHE_FLASH */
 
+#define GPIO_STATUS_W1TC_ADDRESS      0x24
+#endif
 #include <TasmotaSerial.h>
 
 // As the Arduino attachInterrupt has no parameter, lists of objects

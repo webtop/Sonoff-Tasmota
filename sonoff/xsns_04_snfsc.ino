@@ -1,4 +1,4 @@
-#ifdef SNFSC
+#ifdef SNFBRIDGE
 /*
   xsns_04_snfsc.ino - sonoff SC support for Sonoff-Tasmota
 
@@ -53,10 +53,6 @@
    AT+STATUS=4[1B]
 
 \*********************************************************************************************/
-
-#ifdef ESP32
-#error "Not ported"
-#endif
 
 uint16_t sc_value[5] = { 0 };
 

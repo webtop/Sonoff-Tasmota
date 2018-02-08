@@ -24,9 +24,6 @@
  * Adapted from EspEasy plugin P052 by Mikael Trieb (mikael__AT__triebconsulting.se)
 \*********************************************************************************************/
 
-#ifdef ESP32
-  #error "Not ported for ESP32 (due to Tasmota serial incompatibility)!"
-#endif
 #include <TasmotaSerial.h>
 
 #ifndef CO2_LOW

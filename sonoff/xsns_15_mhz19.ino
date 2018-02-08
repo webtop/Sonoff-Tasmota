@@ -31,9 +31,6 @@
  * Select filter usage on low stability readings
 \*********************************************************************************************/
 
-#ifdef ESP32
-  #error "Not ported for ESP32 (due to Tasmota serial incompatibility)!"
-#endif
 enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
 #define MHZ19_FILTER_OPTION          MHZ19_FILTER_FAST

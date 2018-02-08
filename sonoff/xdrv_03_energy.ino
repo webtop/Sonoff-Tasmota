@@ -24,9 +24,6 @@
  * HLW8012 and PZEM004T - Energy
 \*********************************************************************************************/
 
-#ifdef ESP32
-  #error "Not ported for ESP32 (due to Tasmota serial incompatibility)!"
-#endif
 #define FEATURE_POWER_LIMIT  true
 
 enum EnergyHardware { ENERGY_NONE, ENERGY_HLW8012, ENERGY_CSE7766, ENERGY_PZEM004T };
@@ -631,7 +628,12 @@ void EnergyMarginCheck()
   uint16_t energy_power_u = 0;
   uint16_t energy_voltage_u = 0;
   uint16_t energy_current_u = 0;
+#ifdef ESP8266
   boolean flag;
+#endif
+#ifdef ESP32
+  byte flag;  
+#endif  
   boolean jsonflg;
 
   if (energy_power_steady_cntr) {
@@ -983,10 +985,12 @@ void EnergyDrvInit()
   energy_flg = ENERGY_NONE;
   if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {
     energy_flg = ENERGY_HLW8012;
+#ifdef ESP8266
   } else if (SONOFF_S31 == Settings.module) {
     baudrate = 4800;
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
+#endif    
 #ifdef USE_PZEM004T
   } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {
     if (PzemInit()) {

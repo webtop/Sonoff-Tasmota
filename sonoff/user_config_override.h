@@ -54,19 +54,15 @@
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL    // [SerialLog]
 
 // NOT PORTED:
-#undef USE_MHZ19
-#undef USE_ENERGY_SENSOR
-#undef USE_SENSEAIR
-#undef USE_ADC_VCC
-#undef USE_ARILUX_RF
-#undef USE_IR_REMOTE                             // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
-#undef USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)                             (TasmotaSerial)
-#undef USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)                                                        (TasmotaSerial)
- 
+#undef USE_ADC_VCC    // Needs to be ported
+#undef USE_IR_REMOTE  // IRremoteESP8266 needs to be ported
+#undef SNFBRIDGE      // No commercial device, no sense porting
+
 // TO TEST COMPILATION:
 #define TEST_ALL
 
 #ifdef TEST_ALL
+  #define USE_ENERGY_SENSOR
   #define USE_DHT
   #define USE_DS18x20
   //#define USE_DS18x20_LEGACY
@@ -88,7 +84,13 @@
   #undef USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #undef USE_SPI                                  // SPI using library TasmotaTFT
   #undef USE_DISCOVERY
-  #undef USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by // 
+  #undef USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //   
+  #undef USE_SENSEAIR
+  #undef USE_MHZ19
+  #undef USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
+  #undef USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
+  #undef USE_ARILUX_RF
+  #undef USE_ENERGY_SENSOR
 #endif
 
 #endif  // _USER_CONFIG_OVERRIDE_H_

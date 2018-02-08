@@ -2963,7 +2963,6 @@ void loop()
 
 //  yield();     // yield == delay(0), delay contains yield, auto yield in loop
 #ifdef ESP8266
-
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
 #else
   delay(ssleep);  // https://github.com/esp8266/Arduino/issues/2021
@@ -2984,5 +2983,3 @@ void analogWriteRange(uint32_t freq) {}
 #ifdef ESP32
 #define uint32 unsigned int
 #endif
-
-

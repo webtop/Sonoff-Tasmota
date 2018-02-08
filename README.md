@@ -30,46 +30,39 @@ Prepared for Wemos ESP32.
 - HTU (USE_HTU)
 - BMx (USE_BMP, USE_BME680, USE_BH1750)
 - VEML6070 (USE_VEML6070)
-- TSL2561 (USE_TSL2561) (see below)
+- TSL2561 (USE_TSL2561)
 - ADS1115 (USE_ADS1115)
 - INA219 (USE_INA219)
 - DISPLAY (USE_DISPLAY)
+- MHZ19 (USE_MHZ19)
+- ENERGY SENSOR (USE_ENERGY_SENSOR)
+- SENSEAIR (USE_SENSEAIR)
+- ARILUX RF (USE_ARILUX_RF)
 
 ## Not ported
 
-### Whole modules
-
-- USE_MHZ19
-- USE_ENERGY_SENSOR
-- USE_SENSEAIR
 - USE_ADC_VCC
-- USE_ARILUX_RF
 - USE_IR_REMOTE
 - SNFBRIDGE
 - ADC
 - LED
 
-To compile #undef modules above in user_config_override.h
+To compile add in user_config_override.h:
+
+`
+#undef USE_ADC_VCC    // Needs to be ported
+#undef USE_IR_REMOTE  // IRremoteESP8266 needs to be ported
+#undef SNFBRIDGE      // No commercial device, no sense porting
+`
 
 Additionally install:
 - [ESP32Ticker](https://github.com/bertmelis/ESP32Ticker)
 - [WebServer-esp32](https://github.com/zhouhan0126/WebServer-esp32)
 - Support of unsigned long long in [WString](https://github.com/espressif/arduino-esp32/issues/1066)
 
-### TSL2561
-
-Needs changing in TSL2561.cpp to
-`
-#if defined (ESP8266) || defined(ESP32)
-`
-
 ### Partially not working
 
 In code there are marked parts with #warning
-
-## Porting discussion
-
-[Tasmota ESP32 issue](https://github.com/arendst/Sonoff-Tasmota/issues/170)
 
 # ESP8266
 
