@@ -1,4 +1,3 @@
-#ifdef XDRV_LIGHT
 /*
   xdrv_01_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
 
@@ -51,10 +50,6 @@
  * 12            yes     no         no          Fire
  *
 \*********************************************************************************************/
-
-#ifdef ESP32
-#error "XDRV_LIGHT not ported"
-#endif
 
 #define WS2812_SCHEMES       7    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
@@ -356,6 +351,7 @@ void LightInit()
     if (LT_PWM1 == light_type) {
       Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
     }
+#ifdef ESP8266
     if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
       if (!my_module.gp.io[4]) {
         pinMode(4, OUTPUT);             // Stop floating outputs
@@ -370,6 +366,7 @@ void LightInit()
         digitalWrite(14, LOW);
       }
     }
+#endif    
     if (pin[GPIO_ARIRFRCV] < 99) {
 #ifdef USE_ARILUX_RF
       AriluxRfInit();
@@ -684,7 +681,12 @@ void LightAnimate()
 
   strip_timer_counter++;
   if (!light_power) {                   // Power Off
+#ifdef ESP8266    
     sleep = Settings.sleep;
+#endif
+#ifdef ESP32
+    ssleep = Settings.sleep;
+#endif
     strip_timer_counter = 0;
     for (byte i = 0; i < light_subtype; i++) {
       light_still_on += light_new_color[i];
@@ -706,7 +708,12 @@ void LightAnimate()
     }
   }
   else {
+#ifdef ESP8266    
     sleep = 0;
+#endif
+#ifdef ESP32
+    ssleep = 0;
+#endif    
     switch (Settings.light_scheme) {
       case LS_POWER:
         LightSetDimmer(Settings.light_dimmer);
@@ -1258,4 +1265,3 @@ boolean Xdrv01(byte function)
   }
   return result;
 }
-#endif

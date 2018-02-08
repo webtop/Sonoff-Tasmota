@@ -9,6 +9,8 @@ ESP32 port of Tasmota.
 - Relays
 - Webserver
 - MQTT
+- MDNS (Discovery)
+- WS2812
 
 Prepared for Wemos ESP32.
 
@@ -16,15 +18,12 @@ Prepared for Wemos ESP32.
 
 ### Whole modules
 
-- USE_DISCOVERY
 - USE_MHZ19
 - USE_ENERGY_SENSOR
 - USE_SENSEAIR
 - USE_ADC_VCC
 - USE_ARILUX_RF
 - USE_IR_REMOTE
-- USE_WS2812
-- XDRV_LIGHT
 - SNFBRIDGE
 
 To compile #undef in user_config_override.h

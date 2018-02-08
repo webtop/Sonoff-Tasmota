@@ -603,9 +603,7 @@ void HueLightStatus(byte device, String *response)
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
 
   if (light_type) {
-#ifdef XDRV_LIGHT  
     LightReplaceHsb(response);
-#endif    
   } else {
     response->replace("{h}", "0");
     response->replace("{s}", "0");
@@ -717,9 +715,7 @@ void HueLights(String *path)
       }
 
       if (light_type) {
-#ifdef XDRV_LIGHT      
         LightGetHsb(&hue,&sat,&bri);
-#endif        
       }
 
       if (hue_json.containsKey("bri")) {
@@ -773,9 +769,7 @@ void HueLights(String *path)
       }
       if (change) {
         if (light_type) {
-#ifdef XDRV_LIGHT
           LightSetHsb(hue, sat, bri, ct);
-#endif          
         }
         change = false;
       }

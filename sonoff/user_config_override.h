@@ -62,16 +62,16 @@
 #undef USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #undef USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #undef USE_SPI                                  // SPI using library TasmotaTFT
+#undef USE_DISCOVERY
+#undef USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
 */
 
 // NOT PORTED:
-#undef USE_DISCOVERY
 #undef USE_MHZ19
 #undef USE_ENERGY_SENSOR
 #undef USE_SENSEAIR
 #undef USE_ADC_VCC
 #undef USE_ARILUX_RF
 #undef USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
-#undef USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
 
 #endif  // _USER_CONFIG_OVERRIDE_H_

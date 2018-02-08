@@ -63,32 +63,36 @@
 #ifdef USE_WEBSERVER
 #ifdef ESP8266
   #include <ESP8266WebServer.h>             // WifiManager, Webserver
-  #include <DNSServer.h>                    // WifiManager
-#endif  
+#endif 
 #ifdef ESP32
   #include <WebServer.h>
-// WebServer same ESP32 class and variable name   
-  WebServer *www = new WebServer(80);
 #endif
-#endif  // USE_WEBSERVER
+  #include <DNSServer.h>                    // WifiManager
+#endif // USE_WEBSERVER
 #ifdef USE_DISCOVERY
-  #ifdef ESP32
-    #error "Not ported for ESP32!"
-  #endif
+  #ifdef ESP8266
   #include <ESP8266mDNS.h>                  // MQTT, Webserver
-#endif  // USE_DISCOVERY
+  #endif
+  #ifdef ESP32
+  #include <ESPmDNS.h>
+  #endif
+#endif // USE_DISCOVERY
 #ifdef USE_I2C
   #include <Wire.h>                         // I2C support library
-#endif  // USE_I2C
+#endif // USE_I2C
 #ifdef USE_SPI
   #include <SPI.h>                          // SPI support, TFT
-#endif  // USE_SPI
+#endif // USE_SPI
 
 #ifdef ESP32
   #include <nvs.h>
 #endif
 // Structs
 #include "settings.h"
+
+#ifdef ESP32
+  #define os_delay_us ets_delay_us
+#endif
 
 enum TasmotaCommands {
   CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
@@ -246,10 +250,10 @@ void GetMqttClient(char* output, const char* input, byte size)
         snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
 #ifdef ESP8266        
         snprintf_P(output, size, output, ESP.getChipId());
-#endif        
+#endif 
 #ifdef ESP32    
         snprintf_P(output, size, output, ESP.getEfuseMac());
-#endif        
+#endif 
       }
     }
   }
@@ -354,13 +358,13 @@ void SetDevicePower(power_t rpower)
     Serial.write('\n');
     Serial.flush();
   }
-#endif  
+#endif 
 #ifdef ESP8266
   else if (EXS_RELAY == Settings.module) {
     SetLatchingRelay(rpower, 1);
   }
   else 
-#endif    
+#endif 
   {
     for (byte i = 0; i < devices_present; i++) {
       state = rpower &1;
@@ -537,7 +541,7 @@ void MqttConnected()
         (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
     }
-#endif  // USE_WEBSERVER
+#endif // USE_WEBSERVER
 #ifdef ESP8266
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"),
       (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
@@ -545,7 +549,7 @@ void MqttConnected()
 #ifdef ESP32
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"),
       String(get_reset_reason(0)).c_str());      
-#endif      
+#endif 
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     if (Settings.tele_period) {
       tele_period = Settings.tele_period -9;
@@ -569,7 +573,7 @@ void MqttReconnect()
   }
 #ifdef USE_EMULATION
   UdpDisconnect();
-#endif  // USE_EMULATION
+#endif // USE_EMULATION
   if (mqtt_connection_flag > 1) {
 #ifdef USE_MQTT_TLS
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FINGERPRINT));
@@ -586,7 +590,7 @@ void MqttReconnect()
     }
     EspClient.stop();
     yield();
-#endif  // USE_MQTT_TLS
+#endif // USE_MQTT_TLS
     MqttClient.setCallback(MqttDataCallback);
     mqtt_connection_flag = 1;
     mqtt_retry_counter = 1;
@@ -600,9 +604,9 @@ void MqttReconnect()
   if (!strlen(Settings.mqtt_host)) {
     MdnsDiscoverMqttServer();
   }
-#endif  // MQTT_HOST_DISCOVERY
-#endif  // USE_DISCOVERY
-#endif  // USE_MQTT_TLS
+#endif // MQTT_HOST_DISCOVERY
+#endif // USE_DISCOVERY
+#endif // USE_MQTT_TLS
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
 
   GetTopic_P(stopic, TELE, Settings.mqtt_topic, S_LWT);
@@ -1006,7 +1010,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.poweronstate);
     }
-#endif    
+#endif 
     else if ((CMND_PULSETIME == command_code) && (index > 0) && (index <= MAX_PULSETIMERS)) {
       if (data_len > 0) {
         Settings.pulse_timer[index -1] = payload16;  // 0 - 65535
@@ -1298,10 +1302,10 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
         Settings.sleep = payload;
 #ifdef ESP8266
         sleep = payload;
-#endif        
+#endif 
 #ifdef ESP32
         ssleep = payload;        
-#endif        
+#endif 
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
     }
@@ -1474,8 +1478,8 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.emulation);
     }
-#endif  // USE_EMULATION
-#endif  // USE_WEBSERVER
+#endif // USE_EMULATION
+#endif // USE_WEBSERVER
     else if (CMND_TELEPERIOD == command_code) {
       if ((payload >= 0) && (payload < 3601)) {
         Settings.tele_period = (1 == payload) ? TELE_PERIOD : payload;
@@ -1560,7 +1564,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_I2CSCAN == command_code) && i2c_flg) {
       I2cScan(mqtt_data, sizeof(mqtt_data));
     }
-#endif  // USE_I2C
+#endif // USE_I2C
     else if (Settings.flag.mqtt_enabled && MqttCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
       // Serviced
     }
@@ -1574,7 +1578,7 @@ void MqttDataCallback(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
     }
-#endif  // DEBUG_THEO
+#endif // DEBUG_THEO
     else {
       type = NULL;
     }
@@ -1628,7 +1632,7 @@ boolean send_button_power(byte key, byte device, byte state)
     }
 #else
     MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
-#endif  // USE_DOMOTICZ
+#endif // USE_DOMOTICZ
     result = true;
   }
   return result;
@@ -1686,7 +1690,7 @@ void ExecuteCommandPower(byte device, byte state)
     SetDevicePower(power);
 #ifdef USE_DOMOTICZ
     DomoticzUpdatePowerState(device);
-#endif  // USE_DOMOTICZ
+#endif // USE_DOMOTICZ
     if (device <= MAX_PULSETIMERS) {
 //      pulse_timer[(device -1)] = (power & mask) ? Settings.pulse_timer[(device -1)] : 0;
       pulse_timer[(device -1)] = (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[(device -1)] : 0;
@@ -1793,7 +1797,7 @@ void PublishStatus(uint8_t payload)
       my_version, GetBuildDateAndTime().c_str(), ESP.getBootVersion(), ESP.getSdkVersion());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2")); 
 */    
-#endif    
+#endif 
   }
 
   if ((0 == payload) || (3 == payload)) {
@@ -1807,8 +1811,9 @@ void PublishStatus(uint8_t payload)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHMODE "\":%d}}"),
       ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipMode());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
-#endif   
+#endif 
 #ifdef ESP32
+#warning "Not ported"
 //TODO32
 /*
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHMODE "\":%d}}"),
@@ -1883,7 +1888,7 @@ void MqttShowState()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1)), GetStateText(bitRead(power, i)));
     }
   }
-#endif      
+#endif 
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_APMAC_ADDRESS "\":\"%s\"}}"),
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.BSSIDstr().c_str());
@@ -2017,7 +2022,7 @@ void ButtonHandler()
         dual_button_code = 0;
       }
     } else 
-#endif    
+#endif 
     {
       if ((pin[GPIO_KEY1 +i] < 99) && !blockgpio0) {
         button_present = 1;
@@ -2051,7 +2056,7 @@ void ButtonHandler()
           }
         }
       } else 
-#endif      
+#endif 
       {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[i])) {
           if (Settings.flag.button_single) {          // Allow only single button press for immediate action
@@ -2103,7 +2108,7 @@ void ButtonHandler()
                 if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
                   single_press = true;
                 } else  
-#endif                
+#endif 
                 {
                   single_press = (Settings.flag.button_swap +1 == multipress[i]);
                   multipress[i] = 1;
@@ -2331,7 +2336,7 @@ void StateLoop()
         if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
           tstate = (!power) ? 1 : 0;
         }
-#endif        
+#endif 
         SetLedPower(tstate);
       }
     }
@@ -2351,7 +2356,7 @@ void StateLoop()
         ota_retry_counter = OTA_ATTEMPTS;
 #ifdef ESP8266        
         ESPhttpUpdate.rebootOnUpdate(false);
-#endif        
+#endif 
         SettingsSave(1);  // Free flash for OTA update
       }
       if (ota_state_flag <= 0) {
@@ -2359,10 +2364,10 @@ void StateLoop()
         if (Settings.webserver) {
           StopWebserver();
         }
-#endif  // USE_WEBSERVER
+#endif // USE_WEBSERVER
 #ifdef USE_ARILUX_RF
         AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
-#endif  // USE_ARILUX_RF
+#endif // USE_ARILUX_RF
         ota_state_flag = 92;
         ota_result = 0;
         ota_retry_counter--;
@@ -2380,7 +2385,7 @@ void StateLoop()
               ota_url = mqtt_data;  // Try minimal image
             }
           }
-#endif  // BE_MINIMAL
+#endif // BE_MINIMAL
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "%s"), ota_url);
           AddLog(LOG_LEVEL_DEBUG);
 #ifdef ESP32
@@ -2388,7 +2393,7 @@ void StateLoop()
 #endif
 #ifdef ESP8266          
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(ota_url));
-#endif          
+#endif 
           if (!ota_result) {
 #ifndef BE_MINIMAL
 #ifdef ESP8266
@@ -2398,8 +2403,8 @@ void StateLoop()
             if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
               RtcSettings.ota_loader = 1;  // Try minimal image next
             }
-#endif                          
-#endif  // BE_MINIMAL
+#endif 
+#endif // BE_MINIMAL
             ota_state_flag = 2;    // Upgrade failed - retry
           }
         }
@@ -2412,7 +2417,10 @@ void StateLoop()
         } else {
 #ifdef ESP8266          
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
-#endif          
+#endif
+#ifdef ESP32
+#warning "Not ported"
+#endif
         }
         restart_flag = 2;          // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_UPGRADE));
@@ -2549,7 +2557,7 @@ void SerialInput()
       serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
 #ifdef ESP8266      
       SonoffScSerialInput(serial_in_buffer);
-#endif      
+#endif 
       serial_in_byte_counter = 0;
       Serial.flush();
       return;
@@ -2624,7 +2632,7 @@ void GpioInit()
           mpin = 0;
         }
       }
-#endif  // USE_DHT
+#endif // USE_DHT
     }
     if (mpin) {
       pin[mpin] = i;
@@ -2634,7 +2642,7 @@ void GpioInit()
   if (2 == pin[GPIO_TXD]) {
 #ifdef ESP8266    
     Serial.set_tx(2);
-#endif    
+#endif 
   }
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
@@ -2655,14 +2663,14 @@ void GpioInit()
     my_module.gp.io[14] = GPIO_SPI_CLK;
     pin[GPIO_SPI_CLK] = 14;
   }
-#endif  // USE_SPI
+#endif // USE_SPI
 
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
   if (i2c_flg) {
     Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
   }
-#endif  // USE_I2C
+#endif // USE_I2C
 
   devices_present = 1;
 
@@ -2729,7 +2737,7 @@ void GpioInit()
     if (pin[GPIO_KEY1 +i] < 99) {
 #ifdef ESP8266    
       pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP);
-#endif      
+#endif 
 #ifdef ESP32
       pinMode(pin[GPIO_KEY1 +i], INPUT_PULLUP);
 #endif
@@ -2748,7 +2756,7 @@ void GpioInit()
 #endif
 #ifdef ESP32      
       pinMode(pin[GPIO_SWT1 +i], INPUT_PULLUP);
-#endif      
+#endif 
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // set global now so doesn't change the saved power state on first switch check
     }
   }
@@ -2758,7 +2766,7 @@ void GpioInit()
     devices_present++;
     light_type = LT_WS2812;
   }
-#endif  // USE_WS2812
+#endif // USE_WS2812
   if (!light_type) {
     for (byte i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {
@@ -2778,7 +2786,7 @@ void GpioInit()
     SetLatchingRelay(0,2);
     SetLatchingRelay(1,2);
   }
-#endif  
+#endif 
   SetLedPower(Settings.ledstate &8);
 
   XdrvCall(FUNC_INIT);
@@ -2805,7 +2813,7 @@ void setup()
   }
 #ifdef BE_MINIMAL
   snprintf_P(my_version, sizeof(my_version), PSTR("%s-" D_JSON_MINIMAL), my_version);
-#endif  // BE_MINIMAL
+#endif // BE_MINIMAL
 
   SettingsLoad();
   SettingsDelta();
@@ -2816,7 +2824,7 @@ void setup()
   seriallog_timer = SERIALLOG_TIMER;
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
-#endif  // USE_EMULATION
+#endif // USE_EMULATION
   syslog_level = (Settings.flag2.emulation) ? 0 : Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;
   save_data_counter = Settings.save_data;
@@ -2840,7 +2848,7 @@ void setup()
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, Settings.mqtt_topic, ESP.getChipId() & 0x1FFF);
 #else
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, Settings.mqtt_topic, 0 & 0x1FFF);
-#endif    
+#endif 
   } else {
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname);
   }
@@ -2857,11 +2865,11 @@ void setup()
   } else {
 #ifdef ESP8266    
     if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
-#endif             
+#endif 
 #ifdef ESP32 
     if (1>0) {
 #warning "Not ported"
-#endif         
+#endif 
       switch (Settings.poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
@@ -2911,7 +2919,7 @@ void setup()
 #ifdef BE_MINIMAL
   snprintf_P(log_data, sizeof(log_data), PSTR(D_WARNING_MINIMAL_VERSION));
   AddLog(LOG_LEVEL_INFO);
-#endif  // BE_MINIMAL
+#endif // BE_MINIMAL
 
   RtcInit();
   XsnsCall(FUNC_INIT);
@@ -2923,13 +2931,13 @@ void loop()
 
 #ifdef USE_WEBSERVER
   PollDnsWebserver();
-#endif  // USE_WEBSERVER
+#endif // USE_WEBSERVER
 
 #ifdef USE_EMULATION
   if (Settings.flag2.emulation) {
     PollUdp();
   }
-#endif  // USE_EMULATION
+#endif // USE_EMULATION
 
   if (millis() >= state_loop_timer) {
     StateLoop();
@@ -2947,7 +2955,7 @@ void loop()
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
 #else
   delay(ssleep);  // https://github.com/esp8266/Arduino/issues/2021
-#endif  
+#endif 
 }
 
 #ifdef ESP32

@@ -35,6 +35,7 @@
   NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod> *strip = NULL;
 #endif  // USE_WS2812_CTYPE
 #else   // USE_WS2812_DMA
+#ifdef ESP8266
 #if (USE_WS2812_CTYPE == 1)
   NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
 #elif (USE_WS2812_CTYPE == 2)
@@ -44,6 +45,18 @@
 #else   // USE_WS2812_CTYPE
   NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod> *strip = NULL;
 #endif  // USE_WS2812_CTYPE
+#endif
+#ifdef ESP32
+#if (USE_WS2812_CTYPE == 1)
+  NeoPixelBus<NeoGrbFeature, NeoEsp32BitBang800KbpsMethod> *strip = NULL;
+#elif (USE_WS2812_CTYPE == 2)
+  NeoPixelBus<NeoRgbwFeature, NeoEsp32BitBang800KbpsMethod> *strip = NULL;
+#elif (USE_WS2812_CTYPE == 3)
+  NeoPixelBus<NeoGrbwFeature, NeoEsp32BitBang800KbpsMethod> *strip = NULL;
+#else   // USE_WS2812_CTYPE
+  NeoPixelBus<NeoRgbFeature, NeoEsp32BitBang800KbpsMethod> *strip = NULL;
+#endif  // USE_WS2812_CTYPE
+#endif
 #endif  // USE_WS2812_DMA
 
 struct WsColor {
@@ -308,6 +321,7 @@ void Ws2812Init()
   strip = new NeoPixelBus<NeoRgbFeature, Neo800KbpsMethod>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 #endif  // USE_WS2812_CTYPE
 #else  // USE_WS2812_DMA
+#ifdef ESP8266
 #if (USE_WS2812_CTYPE == 1)
   strip = new NeoPixelBus<NeoGrbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
 #elif (USE_WS2812_CTYPE == 2)
@@ -317,6 +331,18 @@ void Ws2812Init()
 #else  // USE_WS2812_CTYPE
   strip = new NeoPixelBus<NeoRgbFeature, NeoEsp8266BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
 #endif  // USE_WS2812_CTYPE
+#endif
+#ifdef ESP32
+#if (USE_WS2812_CTYPE == 1)
+  strip = new NeoPixelBus<NeoGrbFeature, NeoEsp32BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#elif (USE_WS2812_CTYPE == 2)
+  strip = new NeoPixelBus<NeoRgbwFeature, NeoEsp32BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#elif (USE_WS2812_CTYPE == 3)
+  strip = new NeoPixelBus<NeoGrbwFeature, NeoEsp32BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#else  // USE_WS2812_CTYPE
+  strip = new NeoPixelBus<NeoRgbFeature, NeoEsp32BitBang800KbpsMethod>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+#endif  // USE_WS2812_CTYPE
+#endif
 #endif  // USE_WS2812_DMA
   strip->Begin();
   Ws2812Clear();

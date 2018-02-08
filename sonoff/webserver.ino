@@ -304,8 +304,8 @@ const char HDR_CTYPE_STREAM[] PROGMEM = "application/octet-stream";
 #define DNS_PORT 53
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
 
-#ifdef ESP8266
 DNSServer *DnsServer;
+#ifdef ESP8266
 ESP8266WebServer *WebServer;
 #else
 #include "Update.h"
@@ -325,8 +325,8 @@ void StartWebserver(int type, IPAddress ipweb)
     if (!WebServer) {
 #ifdef ESP8266      
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
-#else
-      WebServer = www;
+#else     
+      WebServer = new class WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
 #endif
       WebServer->on("/", HandleRoot);
       WebServer->on("/cn", HandleConfiguration);
@@ -403,30 +403,25 @@ void WifiManagerBegin()
 
   StopWebserver();
 
-#ifdef ESP8266
   DnsServer = new DNSServer();
-#endif
-#ifdef ESP32
-#warning "DNS server not ported"
-#endif  
+
   WiFi.softAP(my_hostname);
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
-#ifdef ESP8266  
+
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
   DnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
-#endif  
+
 
   StartWebserver(HTTP_MANAGER, WiFi.softAPIP());
 }
 
 void PollDnsWebserver()
 {
-#ifdef ESP8266  
   if (DnsServer) {
     DnsServer->processNextRequest();
   }
-#endif  
+
   if (WebServer) {
     WebServer->handleClient();
   }
