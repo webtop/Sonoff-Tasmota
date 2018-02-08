@@ -53,19 +53,6 @@
 
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL    // [SerialLog]
 
-// NOT USED:
-/*
-#undef USE_DOMOTICZ
-#undef USE_HOME_ASSISTANT
-#undef USE_EMULATION
-#undef USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
-#undef USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
-#undef USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
-#undef USE_SPI                                  // SPI using library TasmotaTFT
-#undef USE_DISCOVERY
-#undef USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
-*/
-
 // NOT PORTED:
 #undef USE_MHZ19
 #undef USE_ENERGY_SENSOR
@@ -73,5 +60,33 @@
 #undef USE_ADC_VCC
 #undef USE_ARILUX_RF
 #undef USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
+ 
+// TO TEST COMPILATION:
+#define TEST_ALL
+
+#ifdef TEST_ALL
+  #define USE_DHT
+  #define USE_DS18x20
+  //#define USE_DS18x20_LEGACY
+  #define USE_SPI
+
+  #define USE_VEML6070                           // Add I2C code for VEML6070 sensor (+0k5 code)
+  #define USE_TSL2561                            // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
+  #define USE_ADS1115                            // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
+  //#define USE_ADS1115_I2CDEV                     // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
+  #define USE_INA219                             // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+  #define USE_DISPLAY                            // Add I2C Display Support for LCD, Oled and up to eigth Matrices (+19k code)
+#else
+  // NOT USED:
+  #undef USE_DOMOTICZ
+  #undef USE_HOME_ASSISTANT
+  #undef USE_EMULATION
+  #undef USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
+  #undef USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
+  #undef USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+  #undef USE_SPI                                  // SPI using library TasmotaTFT
+  #undef USE_DISCOVERY
+  #undef USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by // 
+#endif
 
 #endif  // _USER_CONFIG_OVERRIDE_H_

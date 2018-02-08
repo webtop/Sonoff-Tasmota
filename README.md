@@ -8,8 +8,11 @@ Prepared for Wemos ESP32.
 - Wifi
 - Flash (by NVS)
 - Relays
+- Switches (as inputs)
 - Webserver (USE_WEBSERVER)
 - MQTT (MQTT_USE)
+- Logging (Serial, Web)
+- NTP (with simple one zone)
 
 ## Should work (compiles, not tested)
 
@@ -19,7 +22,18 @@ Prepared for Wemos ESP32.
 - I2C (USE_I2C)
 - SPI (USE_SPI)
 - MDNS Discovery (USE_DISCOVERY)
-- WS2812 (USE_DS18x20 and USE_DS18x20_LEGACY)
+- WS2812 (USE_WS2812)
+- Counter
+- DHT (USE_DHT)
+- DS DS18x20 (USE_DS18x20 or USE_DS18x20_LEGACY)
+- SHT (USE_SHT, USE_SHT)
+- HTU (USE_HTU)
+- BMx (USE_BMP, USE_BME680, USE_BH1750)
+- VEML6070 (USE_VEML6070)
+- TSL2561 (USE_TSL2561) (see below)
+- ADS1115 (USE_ADS1115)
+- INA219 (USE_INA219)
+- DISPLAY (USE_DISPLAY)
 
 ## Not ported
 
@@ -41,6 +55,13 @@ Additionally install:
 - [ESP32Ticker](https://github.com/bertmelis/ESP32Ticker)
 - [WebServer-esp32](https://github.com/zhouhan0126/WebServer-esp32)
 - Support of unsigned long long in [WString](https://github.com/espressif/arduino-esp32/issues/1066)
+
+### TSL2561
+
+Needs changing in TSL2561.cpp to
+`
+#if defined (ESP8266) || defined(ESP32)
+`
 
 ### Partially not working
 
