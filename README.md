@@ -42,13 +42,7 @@ In code there are marked parts with #warning
 
 [Tasmota ESP32 issue](https://github.com/arendst/Sonoff-Tasmota/issues/170)
 
-
-
-
-
-
-
-
+# ESP8266
 
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
