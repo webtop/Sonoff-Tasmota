@@ -38,6 +38,18 @@ Additionally there should be added support of unigned long long in [WString](htt
 
 In code there are marked parts with #warning
 
+## Porting discussion
+
+[Tasmota ESP32 issue](https://github.com/arendst/Sonoff-Tasmota/issues/170)
+
+
+
+
+
+
+
+
+
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
