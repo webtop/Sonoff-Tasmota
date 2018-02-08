@@ -1,18 +1,25 @@
 # ESP32
 
 ESP32 port of Tasmota.
+Prepared for Wemos ESP32.
 
-## Working
+## Working (Tested)
 
 - Wifi
 - Flash (by NVS)
 - Relays
-- Webserver
-- MQTT
-- MDNS (Discovery)
-- WS2812
+- Webserver (USE_WEBSERVER)
+- MQTT (MQTT_USE)
 
-Prepared for Wemos ESP32.
+## Should work (compiles, not tested)
+
+- DOMOTICZ (USE_DOMOTICZ)
+- Home Assistant (USE_HOME_ASSISTANT)
+- Emulation (USE_EMULATION)
+- I2C (USE_I2C)
+- SPI (USE_SPI)
+- MDNS Discovery (USE_DISCOVERY)
+- WS2812 (USE_DS18x20 and USE_DS18x20_LEGACY)
 
 ## Not ported
 
@@ -25,14 +32,15 @@ Prepared for Wemos ESP32.
 - USE_ARILUX_RF
 - USE_IR_REMOTE
 - SNFBRIDGE
+- ADC
+- LED
 
-To compile #undef in user_config_override.h
+To compile #undef modules above in user_config_override.h
 
 Additionally install:
 - [ESP32Ticker](https://github.com/bertmelis/ESP32Ticker)
 - [WebServer-esp32](https://github.com/zhouhan0126/WebServer-esp32)
-
-Additionally there should be added support of unigned long long in [WString](https://github.com/espressif/arduino-esp32/issues/1066)
+- Support of unsigned long long in [WString](https://github.com/espressif/arduino-esp32/issues/1066)
 
 ### Partially not working
 
