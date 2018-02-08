@@ -62,7 +62,7 @@
 #undef USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
  
 // TO TEST COMPILATION:
-#define TEST_ALL
+//#define TEST_ALL
 
 #ifdef TEST_ALL
   #define USE_DHT

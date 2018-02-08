@@ -1,4 +1,38 @@
-/* 5.11.1e
+/* 5.11.1j
+ * Prep for release
+ * Change uptime from hour to second resulting in a display of 123T13:45:21 where 123 is days
+ * Fix Arilux RF induced exception by moving interrupt handler to iram on non esp/arduino lib v2.3.0
+ * Add NTP sync based on chip id (#1773)
+ *
+ * 5.11.1i
+ * Update TasmotaSerial library to 1.1.0
+ * Rename commands HlwPCal, HlwUCal and HlwICal to PowerCal, VoltageCal and CurrentCal to be used for both Pow and S31 calibration
+ * Rename commands HlwPSet, HlwUSet and HlwISet to PowerSet, VoltageSet and CurrentSet to be used for both Pow and S31 calibration
+ * Fix some Energy Monitoring related issues
+ * Add command SetOption21 1 to allow Energy Monitoring when power is off on Sonoff Pow and Sonoff S31 (#1420)
+ * Add support for Sonoff S31 Smart Socket with Power Consumption Detection (#1626)
+ * Fix TSL2561 device detection (#1644)
+ * Fix IRReceive Data value (#1663)
+ * Fix compiler warnings (#1774)
+ * Fix command PWM response if no PWM channel is configured (#1783)
+ * Fix Software Watchdog restart around log roll-over (#1793)
+ *
+ * 5.11.1h
+ * Rewrite webserver argument processing gaining 5k code space (#1705)
+ * Redesign weblog storage (#1730)
+ * Fix command SetOption20 (#1741)
+ *
+ * 5.11.1g
+ * Add support for PMS5003 and PMS7003 particle concentration sensor
+ * Reinstate console weblog to 20 lines after some webpage rewrite
+ * Add command SetOption20 to allow update of Dimmer/Color/Ct without turning power on (#1719)
+ * Update language files nl-NL (#1723) and es-AR (#1722)
+ *
+ * 5.11.1f
+ * Revert chunked webserver pages as it fails on many browsers due to chunks being too small (#1706)
+ * Reduce initial console weblog from 20 to 13 lines due to memory constraints
+ *
+ * 5.11.1e
  * Replaced command Ina219Mode with command Sensor13
  * Add chunked webserver pages for large pages saving memory
  * Fix Non-English JSON temperature unit attachement

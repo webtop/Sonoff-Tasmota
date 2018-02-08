@@ -84,8 +84,20 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #ifdef USE_DHT
 #undef USE_DHT                              // Disable internal DHT sensor
 #endif
+#ifdef USE_DISPLAY
+#undef USE_DISPLAY                          // Disable Display support
+#endif
+#ifdef USE_MHZ19
+#undef USE_MHZ19                            // Disable support for MH-Z19 CO2 sensor
+#endif
+#ifdef USE_SENSEAIR
+#undef USE_SENSEAIR                         // Disable support for SenseAir K30, K70 and S8 CO2 sensor
+#endif
 #ifdef USE_IR_REMOTE
 #undef USE_IR_REMOTE                        // Disable IR driver
+#endif
+#ifdef USE_ARILUX_RF
+#undef USE_ARILUX_RF                        // Disable support for Arilux RF remote controller
 #endif
 #ifdef DEBUG_THEO
 #undef DEBUG_THEO                           // Disable debug code
@@ -110,9 +122,13 @@ void WifiWpsStatusCallback(wps_cb_status status);
 #define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string (6 x DS18x20 sensors)
 #endif
 
+<<<<<<< HEAD
 #ifdef ESP8266
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #endif
+=======
+//#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
+>>>>>>> upstream/development
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_ESP8266_RELEASE "STAGED"
 #endif
