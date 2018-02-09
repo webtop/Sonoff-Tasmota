@@ -1364,7 +1364,8 @@ void HandleUploadLoop()
       }
 #ifdef ESP8266      
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-#else
+#endif
+#ifdef ESP32
       uint32_t maxSketchSpace = UPDATE_SIZE_UNKNOWN;
 #endif      
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
@@ -1396,11 +1397,14 @@ void HandleUploadLoop()
           upload_error = 4;
           return;
         }
+        upload.buf[2] = 3;  // Force DOUT - ESP8285
 #endif        
 #ifdef ESP32
-#warning "Not ported"
+        if(bin_flash_size > ESP.getFlashChipSize()) {
+          upload_error = 4;
+          return;
+        }
 #endif
-        upload.buf[2] = 3;  // Force DOUT - ESP8285
       }
     }
     if (upload_file_type) { // config

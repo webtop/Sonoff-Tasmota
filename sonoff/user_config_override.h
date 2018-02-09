@@ -30,28 +30,35 @@
  *            - So I see no use in this but anyway, your on your own.
 \*****************************************************************************************************/
 
-#define APP_POWERON_STATE      0                 // [PowerOnState] Power On Relay state (0 = Off, 1 = On, 2 = Toggle Saved state, 3 = Saved state)
+#define APP_POWERON_STATE      0                      // [PowerOnState] Power On Relay state (0 = Off, 1 = On, 2 = Toggle Saved state, 3 = Saved state)
 
 #undef CFG_HOLDER
-#define CFG_HOLDER             0x20161205        // [Reset 1] Change this value to load following default configuration parameters
+#define CFG_HOLDER             0x20161200             // [Reset 1] Change this value to load following default configuration parameters
 
-#define SAVE_DATA              0                 // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
+#define SAVE_DATA              0                      // [SaveData] Save changed parameters to Flash (0 = disable, 1 - 3600 seconds)
 
-#define SAVE_STATE             0                 // [SetOption0] Save changed power state to Flash (0 = disable, 1 = enable)
+#define SAVE_STATE             0                      // [SetOption0] Save changed power state to Flash (0 = disable, 1 = enable)
 
-#define STA_SSID1              "hipolitek2"      // [Ssid1] Wifi SSID
-#define STA_PASS1              "12hipolitek34"  // [Password1] Wifi password
-#define STA_SSID2              "hipolitek"      // [Ssid2] Optional alternate AP Wifi SSID
-#define STA_PASS2              "12hipolitek34"  // [Password2] Optional alternate AP Wifi password
+#define STA_SSID1              "hipolitek"           // [Ssid1] Wifi SSID
+#define STA_PASS1              "12hipolitek34"        // [Password1] Wifi password
+//#define STA_SSID2              "hipolitek2"            // [Ssid2] Optional alternate AP Wifi SSID
+//#define STA_PASS2              "12hipolitek34"        // [Password2] Optional alternate AP Wifi password
+#define STA_SSID2              ""
+#define STA_PASS2              ""
 
-#define WIFI_CONFIG_TOOL       WIFI_RETRY    // [WifiConfig] Default tool if wifi fails to connect
+#define WIFI_CONFIG_TOOL       WIFI_WAIT              // [WifiConfig] Default tool if wifi fails to connect
 
-#define MQTT_HOST            "hipolitek.ddns.info"          // [MqttHost]
-#define MQTT_PORT            1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
-#define MQTT_USER            "jacek"       // [MqttUser] Optional user
-#define MQTT_PASS            "jacekj"       // [MqttPassword] Optional password
+#define MQTT_USE               1
+#define MQTT_HOST              "hipolitek.ddns.info"  // [MqttHost]
+#define MQTT_PORT              1883                   // [MqttPort] MQTT port (10123 on CloudMQTT)
+#define MQTT_USER              "jacek"                // [MqttUser] Optional user
+#define MQTT_PASS              "jacekj"               // [MqttPassword] Optional password
 
-#define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL    // [SerialLog]
+#define MQTT_FULLTOPIC         "/%topic%/%prefix%/" // [FullTopic] Subscribe and Publish full topic name - Legacy topic
+#define PROJECT                "esp32test4"
+#define MQTT_CLIENT_ID         PROJECT
+
+#define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL          // [SerialLog]
 
 // NOT PORTED:
 #undef USE_ADC_VCC    // Needs to be ported
@@ -59,7 +66,7 @@
 #undef SNFBRIDGE      // No commercial device, no sense porting
 
 // TO TEST COMPILATION:
-#define TEST_ALL
+//#define TEST_ALL
 
 #ifdef TEST_ALL
   #define USE_ENERGY_SENSOR

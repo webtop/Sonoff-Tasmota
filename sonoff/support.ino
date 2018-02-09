@@ -574,7 +574,11 @@ void WifiBegin(uint8_t flag)
 #endif
 
   WiFi.disconnect();
+
   WiFi.mode(WIFI_STA);      // Disable AP mode
+#ifdef ESP32
+ WiFi.enableSTA(true);
+#endif  
   if (Settings.sleep) {
 #ifdef ESP8266    
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
@@ -613,11 +617,12 @@ void WifiBegin(uint8_t flag)
 #ifdef ESP8266  
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
-  AddLog(LOG_LEVEL_INFO);
 #endif
 #ifdef ESP32
-#warning "Not ported"
-#endif  
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
+    Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], 0, my_hostname);
+#endif 
+  AddLog(LOG_LEVEL_INFO); 
 }
 
 void WifiCheckIp()
@@ -643,6 +648,7 @@ void WifiCheckIp()
         break;
       case WL_NO_SSID_AVAIL:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_NOT_REACHED));
+#ifdef ESP8266          
         if (WIFI_WAIT == Settings.sta_config) {
           wifi_retry = WIFI_RETRY_SEC;
         } else {
@@ -653,6 +659,7 @@ void WifiCheckIp()
             wifi_retry = 0;
           }
         }
+#endif        
         break;
       case WL_CONNECT_FAILED:
         AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_WRONG_PASSWORD));
@@ -663,6 +670,12 @@ void WifiCheckIp()
           wifi_retry = 0;
         }
         break;
+#ifdef ESP32        
+      case SYSTEM_EVENT_STA_DISCONNECTED:
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR("Reconnecting"));
+        WiFi.reconnect();
+        break;
+#endif      
       default:  // WL_IDLE_STATUS and WL_DISCONNECTED
         if (!wifi_retry || ((WIFI_RETRY_SEC / 2) == wifi_retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
@@ -671,6 +684,9 @@ void WifiCheckIp()
         }
     }
     if (wifi_retry) {
+      //snprintf_P(log_data, sizeof(log_data), "WifiCheckIp(): Before WifiBegin: wifi_status: %d, wifi_retry: %d, wifi_counter: %d, WIFI_RETRY_SEC: %d", wifi_status, wifi_retry, wifi_counter, WIFI_RETRY_SEC);
+      //AddLog(LOG_LEVEL_INFO); 
+
       if (WIFI_RETRY_SEC == wifi_retry) {
         WifiBegin(3);  // Select default SSID
       }
@@ -697,6 +713,9 @@ void WifiCheck(uint8_t param)
     WifiConfig(param);
     break;
   default:
+    //snprintf_P(log_data, sizeof(log_data), "WifiCheck(): wifi_status: %d, wifi_retry: %d, wifi_counter: %d, wifi_config_counter: %d", wifi_status, wifi_retry, wifi_counter, wifi_config_counter);
+    //AddLog(LOG_LEVEL_INFO); 
+
     if (wifi_config_counter) {
       wifi_config_counter--;
       wifi_counter = wifi_config_counter +5;
