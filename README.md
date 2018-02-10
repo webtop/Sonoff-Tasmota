@@ -13,6 +13,7 @@ Prepared for Wemos ESP32.
 - MQTT (MQTT_USE)
 - Logging (Serial, Web)
 - NTP (with simple one zone)
+- HTTP Update
 
 ## Should work (compiles, not tested)
 

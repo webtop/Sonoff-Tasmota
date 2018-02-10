@@ -55,7 +55,7 @@
 #define MQTT_PASS              "jacekj"               // [MqttPassword] Optional password
 
 #define MQTT_FULLTOPIC         "/%topic%/%prefix%/" // [FullTopic] Subscribe and Publish full topic name - Legacy topic
-#define PROJECT                "esp32test4"
+#define PROJECT                "watervalve2"
 #define MQTT_CLIENT_ID         PROJECT
 
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL          // [SerialLog]

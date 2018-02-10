@@ -532,7 +532,7 @@ void HandleRoot()
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:%d%%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>"),
           100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
         page += mqtt_data;
       }
@@ -603,7 +603,8 @@ void HandleAjaxStatusRefresh()
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{t}<tr>"), mqtt_data);
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
     for (byte idx = 1; idx <= devices_present; idx++) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
+      int v = (bitRead(power, idx -1));
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), v);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>"),  // {c} = %'><div style='text-align:center;font-weight:
         mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
     }
