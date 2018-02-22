@@ -70,7 +70,7 @@ In code there are marked parts with #warning
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
 
-Current version is **5.11.1j** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
+Current version is **5.12.0b** - See [sonoff/_releasenotes.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_releasenotes.ino) for change information.
 
 ### ATTENTION All versions
 
@@ -131,7 +131,7 @@ The following devices are supported:
 - AriLux AL-LC01, AL-LC06 and AL-LC11 PWM LED controller
 - [Supla device - Espablo-inCan mod. for electrical Installation box](https://forum.supla.org/viewtopic.php?f=33&t=2188)
 - [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
-- Wemos D1 mini and NodeMcu
+- Wemos D1 mini, NodeMcu and Ledunia
 
 ### License
 

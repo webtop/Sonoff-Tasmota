@@ -50,6 +50,10 @@
 #define MTX_ADDRESS8           0
 #endif
 
+#ifndef HOME_ASSISTANT_DISCOVERY_ENABLE
+#define HOME_ASSISTANT_DISCOVERY_ENABLE 0
+#endif
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
@@ -169,13 +173,16 @@ extern "C" {
 extern "C" uint32_t _SPIFFS_end;
 #endif
 
-#ifndef ESP8266
+#ifdef ESP32
+// TODO: Port it to ESP32
 #define SPI_FLASH_SEC_SIZE 0
 #endif
 
 #ifdef ESP8266
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
-#else
+#endif
+
+#ifdef ESP32
 #define SPIFFS_END          0
 #endif
 

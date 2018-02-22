@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-IPAddress syslog_host_addr;  // Syslog host IP address
-unsigned long syslog_host_refresh = 0;
+IPAddress syslog_host_addr;      // Syslog host IP address
+uint32_t syslog_host_hash = 0;   // Syslog host name hash
 
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
@@ -423,6 +423,15 @@ void SetSerialBaudrate(int baudrate)
   }
 }
 
+uint32_t GetHash(const char *buffer, size_t size)
+{
+  uint32_t hash = 0;
+  for (uint16_t i = 0; i <= size; i++) {
+    hash += (uint8_t)*buffer++ * (i +1);
+  }
+  return hash;
+}
+
 /*********************************************************************************************\
  * Wifi
 \*********************************************************************************************/
@@ -540,20 +549,20 @@ void WifiConfig(uint8_t type)
       restart_flag = 2;
     }
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG D_ACTIVE_FOR_3_MINUTES));
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
       WiFi.beginSmartConfig();
     }
     else if (WIFI_WPSCONFIG == wifi_config_type) {
       if (WifiWpsConfigBegin()) {
-        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_ACTIVE_FOR_3_MINUTES));
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_ACTIVE_FOR_3_MINUTES));
       } else {
-        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG D_FAILED_TO_START));
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_FAILED_TO_START));
         wifi_config_counter = 3;
       }
     }
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == wifi_config_type) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER D_ACTIVE_FOR_3_MINUTES));
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
       WifiManagerBegin();
     }
 #endif  // USE_WEBSERVER
@@ -1053,6 +1062,7 @@ uint32_t daylight_saving_time = 0;
 uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
+uint32_t restart_time = 0;
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -1085,27 +1095,44 @@ String GetBuildDateAndTime()
   return String(bdt);
 }
 
-String GetDateAndTime()
+String GetDateAndTime(byte time_type)
 {
+  // enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_UPTIME };
   // "2017-03-07T11:08:02" - ISO8601:2004
   char dt[21];
-
-  snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
-    RtcTime.year, RtcTime.month, RtcTime.day_of_month, RtcTime.hour, RtcTime.minute, RtcTime.second);
-  return String(dt);
-}
-
-String GetUtcDateAndTime()
-{
-  // "2017-03-07T11:08:02" - ISO8601:2004
-  char dt[21];
-
   TIME_T tmpTime;
-  BreakTime(utc_time, tmpTime);
-  tmpTime.year += 1970;
 
-  snprintf_P(dt, sizeof(dt), PSTR("%04d" D_YEAR_MONTH_SEPARATOR "%02d" D_MONTH_DAY_SEPARATOR "%02d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"),
-    tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  if (DT_UPTIME == time_type) {
+    if (restart_time) {
+      BreakTime(utc_time - restart_time, tmpTime);
+    } else {
+      BreakTime(uptime, tmpTime);
+    }
+    // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
+    // snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+    // "128 14:35:44" - OpenVMS
+    // "128T14:35:44" - Tasmota
+    snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
+      tmpTime.days, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  } else {
+    switch (time_type) {
+      case DT_UTC:
+        BreakTime(utc_time, tmpTime);
+        tmpTime.year += 1970;
+        break;
+      case DT_RESTART:
+        if (restart_time == 0) {
+          return "";
+        }
+        BreakTime(restart_time, tmpTime);
+        tmpTime.year += 1970;
+        break;
+      default:
+        tmpTime = RtcTime;
+    }
+    snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+      tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+  }
   return String(dt);
 }
 
@@ -1114,14 +1141,20 @@ String GetUptime()
   char dt[16];
 
   TIME_T ut;
-  BreakTime(uptime, ut);
+
+  if (restart_time) {
+    BreakTime(utc_time - restart_time, ut);
+  } else {
+    BreakTime(uptime, ut);
+  }
 
   // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
 //  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
 
   // "128 14:35:44" - OpenVMS
   // "128T14:35:44" - Tasmota
-  snprintf_P(dt, sizeof(dt), PSTR("%d" D_DATE_TIME_SEPARATOR "%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), ut.days, ut.hour, ut.minute, ut.second);
+  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"),
+    ut.days, ut.hour, ut.minute, ut.second);
   return String(dt);
 }
 
@@ -1217,34 +1250,34 @@ uint32_t MakeTime(TIME_T &tm)
 
 uint32_t RuleToTime(TimeChangeRule r, int yr)
 {
-    TIME_T tm;
-    uint32_t t;
-    uint8_t m;
-    uint8_t w;            // temp copies of r.month and r.week
+  TIME_T tm;
+  uint32_t t;
+  uint8_t m;
+  uint8_t w;                // temp copies of r.month and r.week
 
-    m = r.month;
-    w = r.week;
-    if (0 == w) {         // Last week = 0
-      if (++m > 12) {     // for "Last", go to the next month
-        m = 1;
-        yr++;
-      }
-      w = 1;              // and treat as first week of next month, subtract 7 days later
+  m = r.month;
+  w = r.week;
+  if (0 == w) {             // Last week = 0
+    if (++m > 12) {         // for "Last", go to the next month
+      m = 1;
+      yr++;
     }
+    w = 1;                  // and treat as first week of next month, subtract 7 days later
+  }
 
-    tm.hour = r.hour;
-    tm.minute = 0;
-    tm.second = 0;
-    tm.day_of_month = 1;
-    tm.month = m;
-    tm.year = yr - 1970;
-    t = MakeTime(tm);        // First day of the month, or first day of next month for "Last" rules
-    BreakTime(t, tm);
-    t += (7 * (w - 1) + (r.dow - tm.day_of_week + 7) % 7) * SECS_PER_DAY;
-    if (0 == r.week) {
-      t -= 7 * SECS_PER_DAY;    //back up a week if this is a "Last" rule
-    }
-    return t;
+  tm.hour = r.hour;
+  tm.minute = 0;
+  tm.second = 0;
+  tm.day_of_month = 1;
+  tm.month = m;
+  tm.year = yr - 1970;
+  t = MakeTime(tm);         // First day of the month, or first day of next month for "Last" rules
+  BreakTime(t, tm);
+  t += (7 * (w - 1) + (r.dow - tm.day_of_week + 7) % 7) * SECS_PER_DAY;
+  if (0 == r.week) {
+    t -= 7 * SECS_PER_DAY;  // back up a week if this is a "Last" rule
+  }
+  return t;
 }
 
 #ifdef ESP32
@@ -1320,9 +1353,7 @@ uint32_t Midnight()
 boolean MidnightNow()
 {
   boolean mnflg = midnight_now;
-  if (mnflg) {
-    midnight_now = 0;
-  }
+  if (mnflg) midnight_now = 0;
   return mnflg;
 }
 
@@ -1332,7 +1363,7 @@ void RtcSecond()
   uint32_t dstoffset;
   TIME_T tmpTime;
 
-  if ((ntp_sync_minute > 59) && (3 == RtcTime.minute)) ntp_sync_minute = 1;                // If sync prepare for a new cycle
+  if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
   uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
   if ((WL_CONNECTED == WiFi.status()) && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) {
 #ifdef ESP8266    
@@ -1343,19 +1374,19 @@ void RtcSecond()
 #endif
     if (ntp_time) {
       utc_time = ntp_time;
+      ntp_sync_minute = 60;  // Sync so block further requests
+      if (restart_time == 0) {
+        restart_time = utc_time - uptime;  // save first ntp time as restart time
+      }
       BreakTime(utc_time, tmpTime);
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(DaylightSavingTime, RtcTime.year);
       standard_time = RuleToTime(StandardTime, RtcTime.year);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s"), GetTime(0).c_str());
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+        GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_DST_TIME ") %s"), GetTime(2).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_STD_TIME ") %s"), GetTime(3).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
-      ntp_sync_minute = 60;  // Sync so block further requests
     } else {
-      ntp_sync_minute++;     // Try again in next minute
+      ntp_sync_minute++;  // Try again in next minute
     }
   }
   utc_time++;
@@ -1493,9 +1524,9 @@ void Syslog()
   // Destroys log_data
   char syslog_preamble[64];  // Hostname + Id
 
-  if ((static_cast<uint32_t>(syslog_host_addr) == 0) || ((millis() - syslog_host_refresh) > 60000)) {
-    WiFi.hostByName(Settings.syslog_host, syslog_host_addr);
-    syslog_host_refresh = millis();
+  if (syslog_host_hash != GetHash(Settings.syslog_host, strlen(Settings.syslog_host))) {
+    syslog_host_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
+    WiFi.hostByName(Settings.syslog_host, syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
     snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), my_hostname);
@@ -1571,13 +1602,18 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel)
+void AddLogSerial(byte loglevel, uint8_t *buffer, byte count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
-  for (byte i = 0; i < serial_in_byte_counter; i++) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, serial_in_buffer[i]);
+  for (byte i = 0; i < count; i++) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
   AddLog(loglevel);
+}
+
+void AddLogSerial(byte loglevel)
+{
+  AddLogSerial(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
 /*********************************************************************************************\

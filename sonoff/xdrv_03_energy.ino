@@ -469,6 +469,8 @@ bool PzemRecieve(uint8_t resp, float *data)
     }
   }
 
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
+
   if (len != sizeof(PZEMCommand)) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));
     return false;
@@ -751,7 +753,7 @@ void EnergyMarginCheck()
 void EnergyMqttShow()
 {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime().c_str());
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
   EnergyShow(1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
@@ -983,26 +985,34 @@ boolean EnergyCommand()
 void EnergyDrvInit()
 {
   energy_flg = ENERGY_NONE;
-  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {
+  if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow
     energy_flg = ENERGY_HLW8012;
+<<<<<<< HEAD
 #ifdef ESP8266
   } else if (SONOFF_S31 == Settings.module) {
+=======
+  } else if (SONOFF_S31 == Settings.module) {  // Sonoff S31
+>>>>>>> upstream/development
     baudrate = 4800;
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
 #endif    
 #ifdef USE_PZEM004T
-  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {
-    if (PzemInit()) {
-      energy_flg = ENERGY_PZEM004T;
-    }
+  } else if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX])) {  // Any device with a Pzem004T
+    energy_flg = ENERGY_PZEM004T;
 #endif  // USE_PZEM004T
   }
 }
 
-void EnergyInit()
+void EnergySnsInit()
 {
   if (ENERGY_HLW8012 == energy_flg) HlwInit();
+
+#ifdef USE_PZEM004T
+  if ((ENERGY_PZEM004T == energy_flg) && !PzemInit()) {  // PzemInit needs to be done here as earlier (serial) interrupts may lead to Exceptions
+    energy_flg = ENERGY_NONE;
+  }
+#endif  // USE_PZEM004T
 
   if (energy_flg) {
     energy_kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_kWhtoday : 0;
@@ -1106,7 +1116,7 @@ boolean Xsns03(byte function)
   if (energy_flg) {
     switch (function) {
       case FUNC_INIT:
-        EnergyInit();
+        EnergySnsInit();
         break;
       case FUNC_EVERY_SECOND:
         EnergyMarginCheck();
