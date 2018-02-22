@@ -20,6 +20,9 @@
 #ifndef _USER_CONFIG_OVERRIDE_H_
 #define _USER_CONFIG_OVERRIDE_H_
 
+#define RELEASE_CONFIG
+
+#ifndef RELEASE_CONFIG
 /*****************************************************************************************************\
  * ATTENTION: - Changes to most PARAMETER defines will only override flash settings if you change
  *              define CFG_HOLDER.
@@ -61,11 +64,6 @@
 
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL          // [SerialLog]
 
-// NOT PORTED:
-#undef USE_ADC_VCC    // Needs to be ported
-#undef USE_IR_REMOTE  // IRremoteESP8266 needs to be ported
-#undef SNFBRIDGE      // No commercial device, no sense porting
-
 // TO TEST COMPILATION:
 #define TEST_ALL
 
@@ -102,5 +100,15 @@
 #endif
 
 #define TIME_WITH_MILLIS
+
+#else // RELEASE
+
+#endif
+
+// NOT PORTED:
+#undef USE_ADC_VCC    // Needs to be ported
+#undef USE_IR_REMOTE  // IRremoteESP8266 needs to be ported
+#undef SNFBRIDGE      // No commercial device, no sense porting
+
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
