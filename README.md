@@ -56,10 +56,12 @@ To compile add in user_config_override.h:
 #undef SNFBRIDGE      // No commercial device, no sense porting
 ```
 
-Additionally install:
+Additionally add:
+- Support of unsigned long long in [WString](https://github.com/espressif/arduino-esp32/issues/1066)
+
+External additional libraries (in lib directory):
 - [ESP32Ticker](https://github.com/bertmelis/ESP32Ticker)
 - [WebServer-esp32](https://github.com/zhouhan0126/WebServer-esp32)
-- Support of unsigned long long in [WString](https://github.com/espressif/arduino-esp32/issues/1066)
 
 ### Partially not working
 
