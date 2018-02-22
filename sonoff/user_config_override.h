@@ -67,7 +67,7 @@
 #undef SNFBRIDGE      // No commercial device, no sense porting
 
 // TO TEST COMPILATION:
-//#define TEST_ALL
+#define TEST_ALL
 
 #ifdef TEST_ALL
   #define USE_ENERGY_SENSOR

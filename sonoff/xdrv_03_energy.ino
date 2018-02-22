@@ -987,12 +987,8 @@ void EnergyDrvInit()
   energy_flg = ENERGY_NONE;
   if ((pin[GPIO_HLW_SEL] < 99) && (pin[GPIO_HLW_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // Sonoff Pow
     energy_flg = ENERGY_HLW8012;
-<<<<<<< HEAD
 #ifdef ESP8266
-  } else if (SONOFF_S31 == Settings.module) {
-=======
   } else if (SONOFF_S31 == Settings.module) {  // Sonoff S31
->>>>>>> upstream/development
     baudrate = 4800;
     serial_config = SERIAL_8E1;
     energy_flg = ENERGY_CSE7766;
