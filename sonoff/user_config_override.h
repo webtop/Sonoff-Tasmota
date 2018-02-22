@@ -55,7 +55,8 @@
 #define MQTT_PASS              "jacekj"               // [MqttPassword] Optional password
 
 #define MQTT_FULLTOPIC         "/%topic%/%prefix%/" // [FullTopic] Subscribe and Publish full topic name - Legacy topic
-#define PROJECT                "watervalve2"
+//#define PROJECT                "watervalve2"
+#define PROJECT                "esp32test"
 #define MQTT_CLIENT_ID         PROJECT
 
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_ALL          // [SerialLog]
@@ -99,5 +100,7 @@
   #undef USE_ARILUX_RF
   #undef USE_ENERGY_SENSOR
 #endif
+
+#define TIME_WITH_MILLIS
 
 #endif  // _USER_CONFIG_OVERRIDE_H_

@@ -1519,9 +1519,15 @@ void Syslog()
 
 void AddLog(byte loglevel)
 {
+#ifndef TIME_WITH_MILLIS
   char mxtime[10];  // "13:45:21 "
 
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
+#else  
+  char mxtime[14];  // "13:45:21.000 "
+
+  snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d" D_DECIMAL_SEPARATOR "%03d "), RtcTime.hour, RtcTime.minute, RtcTime.second, millis() % 1000);
+#endif
 
   if (loglevel <= seriallog_level) {
     Serial.printf("%s%s\n", mxtime, log_data);
