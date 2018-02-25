@@ -62,6 +62,10 @@ External additional libraries (in lib directory):
 - [ESP32Ticker](https://github.com/bertmelis/ESP32Ticker)
 - [WebServer-esp32](https://github.com/zhouhan0126/WebServer-esp32)
 
+### Board
+
+If working with Arduino IDE: set Tool->Board->ESP32 Dev Module
+
 ### Headers definitions
 
 To compile in user_config_override.h should be:
