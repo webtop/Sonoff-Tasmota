@@ -48,7 +48,23 @@ Prepared for Wemos ESP32.
 - ADC
 - LED
 
-To compile add in user_config_override.h:
+## Installation
+
+### ESP32 for Arduino IDE
+
+Please follow [Installation Instructions](https://github.com/espressif/arduino-esp32#installation-instructions)
+
+### Libraries
+
+If working with Arduino IDE: copy all project libraries from \lib to Arduino\libraries
+
+External additional libraries (in lib directory):
+- [ESP32Ticker](https://github.com/bertmelis/ESP32Ticker)
+- [WebServer-esp32](https://github.com/zhouhan0126/WebServer-esp32)
+
+### Headers definitions
+
+To compile in user_config_override.h should be:
 
 ```
 #undef USE_ADC_VCC    // Needs to be ported
@@ -56,12 +72,11 @@ To compile add in user_config_override.h:
 #undef SNFBRIDGE      // No commercial device, no sense porting
 ```
 
+### WString support
+
 Additionally add:
 - Support of unsigned long long in [WString](https://github.com/espressif/arduino-esp32/issues/1066)
 
-External additional libraries (in lib directory):
-- [ESP32Ticker](https://github.com/bertmelis/ESP32Ticker)
-- [WebServer-esp32](https://github.com/zhouhan0126/WebServer-esp32)
 
 ### Partially not working
 
