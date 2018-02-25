@@ -5,3 +5,4 @@
 .vscode
 sonoff/user_config_override.h
 sonoff/sonoff.ino.esp32.bin
+sonoff/user_config_override.h
