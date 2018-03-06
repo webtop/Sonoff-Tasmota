@@ -2052,6 +2052,7 @@ void ButtonHandler()
           holdbutton[button_index] = (Settings.param[P_HOLD_TIME] * (STATES / 10)) -1;
         }
         dual_button_code = 0;
+      }
       } else 
 #endif         
     {
