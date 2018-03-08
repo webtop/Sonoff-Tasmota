@@ -41,8 +41,14 @@
 //#endif
 //#define STA_SSID1              "yourssid1"
 
+
+#ifdef ESP32
 #undef USE_ADC_VCC    // Needs to be ported
 #undef USE_IR_REMOTE  // IRremoteESP8266 needs to be ported
 #undef SNFBRIDGE      // No commercial device, no sense porting
+#else
+#define SNFBRIDGE
+#define USE_ENERGY_SENSOR
+#endif
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
