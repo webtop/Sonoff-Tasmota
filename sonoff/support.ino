@@ -603,6 +603,11 @@ void WifiBegin(uint8_t flag)
     WiFi.setAutoConnect(true);
   }
 //  WiFi.setAutoReconnect(true);
+#ifdef ESP32
+//works with it
+//  WiFi.setAutoConnect(true);
+//  WiFi.setAutoReconnect(true);
+#endif
   switch (flag) {
   case 0:  // AP1
   case 1:  // AP2
@@ -630,6 +635,8 @@ void WifiBegin(uint8_t flag)
 #ifdef ESP32
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], 0, my_hostname);
+//works with it
+//delay(1500);
 #endif 
   AddLog(LOG_LEVEL_INFO); 
 }
