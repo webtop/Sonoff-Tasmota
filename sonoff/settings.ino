@@ -77,7 +77,7 @@ void RtcSettingsSave()
 {
   if (GetRtcSettingsHash() != rtc_settings_hash) {
     RtcSettings.valid = RTC_MEM_VALID;
-#ifdef ESP8266    
+#ifdef ESP8266
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
 #endif
 #ifdef ESP32
@@ -93,9 +93,9 @@ void RtcSettingsSave()
 
 void RtcSettingsLoad()
 {
-#ifdef ESP8266  
+#ifdef ESP8266
   ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
-#endif  
+#endif
 #ifdef ESP32
 #warning "RTC not ported"
 #endif
@@ -179,7 +179,7 @@ extern "C" uint32_t _SPIFFS_end;
 #endif
 
 #ifdef ESP8266
-#define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
+  #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 #endif
 
 #ifdef ESP32
@@ -286,7 +286,7 @@ void SettingsSave(byte rotate)
       }
     }
     Settings.save_flag++;
-#ifdef ESP8266     
+#ifdef ESP8266
     noInterrupts();
     spi_flash_erase_sector(settings_location);
     spi_flash_write(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
@@ -299,10 +299,10 @@ void SettingsSave(byte rotate)
         delay(1);
       }
     }
-#endif    
+#endif
 #ifdef ESP32
   noInterrupts();
-  nvs_handle handle;  
+  nvs_handle handle;
   esp_err_t resultOpen = nvs_open("main", NVS_READWRITE, &handle);
   size_t size = sizeof(SYSCFG);
   esp_err_t resultSet = nvs_set_blob(handle, "Settings", (uint32*)&Settings, size);
@@ -332,12 +332,12 @@ void SettingsLoad()
   for (byte i = 0; i < CFG_ROTATES; i++) {
     settings_location--;
     noInterrupts();
-#ifdef ESP8266        
+#ifdef ESP8266
     spi_flash_read(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     spi_flash_read((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
 #endif
 #ifdef ESP32
-  nvs_handle handle;  
+  nvs_handle handle;
   esp_err_t resultOpen = nvs_open("main", NVS_READONLY, &handle);
   {
     size_t size = sizeof(SYSCFG);
@@ -365,14 +365,14 @@ void SettingsLoad()
   if (Settings.cfg_holder != CFG_HOLDER) {
     // Auto upgrade
     noInterrupts();
-#ifdef ESP8266        
+#ifdef ESP8266
     spi_flash_read((SETTINGS_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
     if (Settings.save_flag < _SettingsH.save_flag)
       spi_flash_read((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-#endif        
+#endif
 #ifdef ESP32
-  nvs_handle handle;  
+  nvs_handle handle;
   esp_err_t resultOpen = nvs_open("upg", NVS_READONLY, &handle);
   {
     size_t size = sizeof(SYSCFG);
@@ -401,7 +401,7 @@ void SettingsLoad()
 
 void SettingsErase()
 {
-#ifdef ESP8266  
+#ifdef ESP8266
   SpiFlashOpResult result;
 
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
@@ -427,11 +427,11 @@ void SettingsErase()
     }
     OsWatchLoop();
   }
-#endif  
+#endif
 #ifdef ESP32
   //TODO: add error checks
   noInterrupts();
-  nvs_handle handle;  
+  nvs_handle handle;
   esp_err_t resultOpen = nvs_open("main",  NVS_READWRITE, &handle);
   esp_err_t resultErase = nvs_erase_all(handle);
   esp_err_t resultCommit = nvs_commit(handle);
@@ -526,6 +526,10 @@ void SettingsDefaultSet2()
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
+
+  #ifdef USE_USERTIMERS
+  Settings.flag.mqtt_sensor_retain = MQTT_SENSOR_RETAIN;
+  #endif
 
   Settings.flag2.emulation = EMULATION;
 
@@ -762,6 +766,48 @@ void SettingsDefaultSet_5_8_1()
   Settings.ws_color[WS_HOUR][WS_RED] = 255;
   Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
   Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
+
+    // USERTIMERS default
+
+#ifdef USE_USERTIMERS
+  Settings.UTempHigh = 195;
+  Settings.UTempLow = 55;
+
+  for (uint8_t i=0;i<MAX_USERTIMERS;i++)
+   {
+     Settings.UserTimers[i].time=0;
+     Settings.UserTimers[i].days=0;
+     Settings.UserTimers[i].mode=0;
+     Settings.UserTimers[i].relay=0;
+     Settings.UserTimers[i].flags.data=0;
+   }
+
+   Settings.UserTimers[0].time=1301;
+   Settings.UserTimers[0].days=0xFF;
+   Settings.UserTimers[0].mode=1;
+   Settings.UserTimers[0].relay=0;
+   Settings.UserTimers[0].flags.data=0;
+
+   Settings.UserTimers[1].time=1401;
+   Settings.UserTimers[1].days=0xFF;
+   Settings.UserTimers[1].mode=1;
+   Settings.UserTimers[1].relay=0;
+   Settings.UserTimers[1].flags.data=0;
+
+   Settings.UserTimers[2].time=301;
+   Settings.UserTimers[2].days=0xFF;
+   Settings.UserTimers[2].mode=1;
+   Settings.UserTimers[2].relay=0;
+   Settings.UserTimers[2].flags.data=0;
+
+   Settings.UserTimers[3].time=401;
+   Settings.UserTimers[3].days=0xFF;
+   Settings.UserTimers[3].mode=1;
+   Settings.UserTimers[3].relay=0;
+   Settings.UserTimers[3].flags.data=0;
+#endif
+
+
 }
 
 void SettingsDefaultSet_5_10_1()
@@ -956,5 +1002,3 @@ void SettingsDelta()
     SettingsSave(1);
   }
 }
-
-

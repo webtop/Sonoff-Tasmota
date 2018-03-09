@@ -469,4 +469,10 @@ const char S_INFORMATION[] PROGMEM = D_INFORMATION;
 const char S_RESTART[] PROGMEM = D_RESTART;
 #endif  // USE_WEBSERVER
 
+
+#ifdef USE_USERTIMERS
+const char S_CONFIGURE_TIMERS[] PROGMEM = D_CONFIGURE_TIMERS;
+#endif
+
+
 #endif  // _I18N_H_

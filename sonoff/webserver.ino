@@ -180,6 +180,11 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='rb' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU2[] PROGMEM =
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
+  #ifdef USE_USERTIMERS
+  #ifdef USE_USERTIMERSWEB
+    "<br/><form action='tm' method='get'><button>" D_CONFIGURE_TIMERS "</button></form>"
+  #endif
+  #endif
   "<br/><form action='w0' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
 const char HTTP_BTN_MENU3[] PROGMEM =
   "<br/><form action='mq' method='get'><button>" D_CONFIGURE_MQTT "</button></form>"
@@ -258,6 +263,52 @@ const char HTTP_FORM_OTHER3a[] PROGMEM =
 const char HTTP_FORM_OTHER3b[] PROGMEM =
   "<br/><input style='width:10%;' id='r{1' name='b2' type='radio' value='{1'{2><b>{3</b>{4";  // Different id only used for labels
 #endif  // USE_EMULATION
+
+//**************************************************************************************
+  #ifdef USE_USERTIMERS
+  #ifdef USE_USERTIMERSWEB
+
+  const char HTTP_FORM_TIMERS[] PROGMEM =
+    "<fieldset><legend><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend><form method='get' action='sv'>"
+    "<input id='w' name='w' value='7' hidden><input id='r' name='r' value='1' hidden>";
+    const char HTTP_FORM_TIMERS1[] PROGMEM =
+
+      "<div><b>Timer{t200}</b>&nbsp;<input style='width:20%;' id='{t100}' name='{t100}' placeholder='" D_TIMERS_TIME "' value='{t101}'>"
+
+
+
+      "&nbsp;<select style='width:20%;' id='{m100}' name='{m100}'>"
+      "<option{a0value='0'>" D_TIMERS_NOP "</option>"
+      "<option{a1value='1'>" D_TIMERS_ON "</option>"
+      "<option{a2value='2'>" D_TIMERS_OFF "</option>"
+      "</select>"
+
+      "&nbsp;<select style='width:20%;' id='{r100}' name='{r100}'>"
+      "<option{f0value='0'>" D_TIMERS_RELAY1 "</option>"
+      "<option{f1value='1'>" D_TIMERS_RELAY2 "</option>"
+      "<option{f2value='2'>" D_TIMERS_RELAY3 "</option>"
+      "<option{f3value='3'>" D_TIMERS_RELAY4 "</option>"
+      "<option{f4value='4'>" D_TIMERS_RELAY5 "</option>"
+      "<option{f5value='5'>" D_TIMERS_RELAY6 "</option>"
+      "<option{f6value='6'>" D_TIMERS_RELAY7 "</option>"
+      "<option{f7value='7'>" D_TIMERS_RELAY8 "</option>"
+      "</select>"
+
+      "<input style='width:10%;' id='{o0}' name='{o0}' type='checkbox'{o100}>" D_TIMERS_ONCE "</div>"
+
+      "<div><input style='width:5%;' id='{e1}' name='{e1}' type='checkbox'{d1}>" D_TIMERS_MON ""
+           "<input style='width:5%;' id='{e2}' name='{e2}' type='checkbox'{d2}>" D_TIMERS_TUE ""
+           "<input style='width:5%;' id='{e3}' name='{e3}' type='checkbox'{d3}>" D_TIMERS_WED ""
+           "<input style='width:5%;' id='{e4}' name='{e4}' type='checkbox'{d4}>" D_TIMERS_THU ""
+           "<input style='width:5%;' id='{e5}' name='{e5}' type='checkbox'{d5}>" D_TIMERS_FRI ""
+           "<input style='width:5%;' id='{e6}' name='{e6}' type='checkbox'{d6}>" D_TIMERS_SAT ""
+           "<input style='width:5%;' id='{e7}' name='{e7}' type='checkbox'{d7}>" D_TIMERS_SUN "</div><br><br/>";
+
+
+#endif
+  #endif
+  //************************************************************************************************
+
 const char HTTP_FORM_END[] PROGMEM =
   "<br/><button type='submit'>" D_SAVE "</button></form></fieldset>";
 const char HTTP_FORM_RST[] PROGMEM =
@@ -301,11 +352,17 @@ const char HDR_CTYPE_XML[] PROGMEM = "text/xml";
 const char HDR_CTYPE_JSON[] PROGMEM = "application/json";
 const char HDR_CTYPE_STREAM[] PROGMEM = "application/octet-stream";
 
+
+
+
 #define DNS_PORT 53
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
 
 DNSServer *DnsServer;
+
+
 #ifdef ESP8266
+
 ESP8266WebServer *WebServer;
 #else
 #include "Update.h"
@@ -331,14 +388,19 @@ void StartWebserver(int type, IPAddress ipweb)
 {
   if (!webserver_state) {
     if (!WebServer) {
-#ifdef ESP8266      
-      WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
-#else     
+#ifdef ESP8266
+      WebServer = new class ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
+#else
       WebServer = new class WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
 #endif
       WebServer->on("/", HandleRoot);
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
+      #ifdef USE_USERTIMERS
+      #ifdef  USE_USERTIMERSWEB
+      WebServer->on("/tm", HandleTimerConfiguration);
+      #endif
+      #endif
       WebServer->on("/w1", HandleWifiConfigurationWithScan);
       WebServer->on("/w0", HandleWifiConfiguration);
       if (Settings.flag.mqtt_enabled) {
@@ -519,7 +581,7 @@ void HandleRoot()
 
     page += F("<div id='l1' name='l1'></div>");
     if (devices_present) {
-#ifdef ESP8266      
+#ifdef ESP8266
       if (light_type) {
         if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER1, LightGetColorTemp());
@@ -528,7 +590,7 @@ void HandleRoot()
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER2, Settings.light_dimmer);
         page += mqtt_data;
       }
-#endif      
+#endif
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
       for (byte idx = 1; idx <= devices_present; idx++) {
@@ -539,7 +601,7 @@ void HandleRoot()
       }
       page += F("</tr></table>");
     }
-#ifdef ESP82666    
+#ifdef ESP82666
     if (SONOFF_BRIDGE == Settings.module) {
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
@@ -753,7 +815,7 @@ void HandleModuleConfiguration()
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += mqtt_data;
-#endif      
+#endif
 #ifdef ESP32
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:126px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN : "", i, i);
@@ -766,6 +828,127 @@ void HandleModuleConfiguration()
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
 }
+
+//******************************************************************************
+#ifdef USE_USERTIMERS
+#ifdef USE_USERTIMERSWEB
+
+void HandleTimerConfiguration1() {
+ if (HttpUser()) {
+    return;
+  }
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MQTT);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_MQTT));
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page += FPSTR(HTTP_FORM_MQTT);
+  char str[sizeof(Settings.mqtt_client)];
+  page.replace(F("{m0"), GetMqttClient(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
+  page.replace(F("{m1"), Settings.mqtt_host);
+  page.replace(F("{m2"), String(Settings.mqtt_port));
+  page.replace(F("{m3"), Settings.mqtt_client);
+  page.replace(F("{m4"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
+  page.replace(F("{m5"), (Settings.mqtt_pwd[0] == '\0')?"0":Settings.mqtt_pwd);
+  page.replace(F("{m6"), Settings.mqtt_topic);
+  page.replace(F("{m7"), Settings.mqtt_fulltopic);
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  ShowPage(page);
+  }
+
+void HandleTimerConfiguration()
+{
+  if (HttpUser()) {
+    return;
+  }
+  char stemp[20];
+  char line[160];
+
+  uint8_t midx;
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMERS);
+
+
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_TIMERS));
+   page += FPSTR(HTTP_HEAD_STYLE);
+   page += FPSTR(HTTP_FORM_TIMERS);
+
+  for (uint8_t a =0;a<USED_USERTIMERS;a++)
+    {
+
+
+       page += FPSTR(HTTP_FORM_TIMERS1);
+
+       snprintf_P(line, sizeof(line), PSTR("%d"),1+a );
+       page.replace(F("{t200}"), line);   //Timer name label
+
+       snprintf_P(line, sizeof(line), PSTR("%d"),a );
+       String func = "t";
+       page.replace(F("{t100}"), func+line);  //Time id
+
+       snprintf_P(line, sizeof(line), PSTR("%02d:%02d"),Settings.UserTimers[a].time/100,Settings.UserTimers[a].time- ((Settings.UserTimers[a].time/100)*100) );  // g0 - g16
+       page.replace(F("{t101}"), line);   //Time value
+
+
+
+       func = "e";
+      page.replace(F("{e1}"), func+String(11+a*10));
+       page.replace(F("{d1}"), (Settings.UserTimers[a].days & 1) ? F(" checked") : F(" "));
+
+       page.replace(F("{e2}"), func+String(12+a*10));
+       page.replace(F("{d2}"), (Settings.UserTimers[a].days & 2) ? F(" checked") : F(" "));
+
+       page.replace(F("{e3}"), func+String(13+a*10));
+       page.replace(F("{d3}"), (Settings.UserTimers[a].days & 4) ? F(" checked") : F(" "));
+
+       page.replace(F("{e4}"), func+String(14+a*10));
+       page.replace(F("{d4}"), (Settings.UserTimers[a].days & 8) ? F(" checked") : F(" "));
+
+       page.replace(F("{e5}"), func+String(15+a*10));
+       page.replace(F("{d5}"), (Settings.UserTimers[a].days & 0x10) ? F(" checked") : F(" "));
+
+       page.replace(F("{e6}"), func+String(16+a*10));
+       page.replace(F("{d6}"), (Settings.UserTimers[a].days & 0x20) ? F(" checked") : F(" "));
+
+       page.replace(F("{e7}"), func+String(17+a*10));
+       page.replace(F("{d7}"), (Settings.UserTimers[a].days & 0x40) ? F(" checked") : F(" "));
+
+
+       snprintf_P(line, sizeof(line), PSTR("%d"),a );
+
+       func = "m";
+       page.replace(F("{m100}"), func+line);    // mode id   //XXXXX
+       for (byte i = 0; i < 3; i++) {
+         page.replace("{a" + String(i), (i == Settings.UserTimers[a].mode) ? F(" selected ") : F(" "));
+       }
+
+       func = "r";
+       page.replace(F("{r100}"), func+line);    // relay id
+       for (byte i = 0; i < 8; i++) {
+         page.replace("{f" + String(i), (i == Settings.UserTimers[a].relay) ? F(" selected ") : F(" "));
+       }
+
+       func = "o";
+       page.replace(F("{o0}"), func+line);
+       page.replace(F("{o100}") , (Settings.UserTimers[a].flags.oneshot) ? F(" checked") : F(" "));
+
+
+     }
+
+
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  ShowPage(page);
+}
+#endif
+#endif
+//******************************************************************************
+
+
+
 
 void HandleWifiConfigurationWithScan()
 {
@@ -850,9 +1033,9 @@ void HandleWifi(boolean scan)
           item.replace(F("{v}"), WiFi.SSID(indices[i]));
           item.replace(F("{r}"), rssiQ);
           uint8_t auth = WiFi.encryptionType(indices[i]);
-#ifdef ESP8266          
+#ifdef ESP8266
           item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F(D_WEP) : (ENC_TYPE_TKIP == auth) ? F(D_WPA_PSK) : (ENC_TYPE_CCMP == auth) ? F(D_WPA2_PSK) : (ENC_TYPE_AUTO == auth) ? F(D_AUTO) : F(""));
-#endif          
+#endif
 #ifdef ESP32
 #warning "Not ported"
 #endif
@@ -1042,6 +1225,42 @@ void HandleSaveSettings()
     what = atoi(tmp);
   }
   switch (what) {
+  case 7:
+    #ifdef USE_USERTIMERS
+    #ifdef USE_USERTIMERSWEB
+  //  UserTimers[i].time=0;
+  //  UserTimers[i].days=0;
+  //  UserTimers[i].mode=0;                 //XXXXX
+  //  UserTimers[i].relay=0;
+  //  UserTimers[i].flags.data=0;
+     for(byte x=0 ; x < USED_USERTIMERS; x++)
+       {
+        strlcpy(stemp, (!strlen(WebServer->arg("t"+String(x)).c_str())) ? MQTT_TOPIC : WebServer->arg("t"+String(x)).c_str(), sizeof(stemp));
+        Settings.UserTimers[x].time=MakeValidTime(stemp);
+        Settings.UserTimers[x].mode = (!strlen(WebServer->arg("m"+String(x)).c_str())) ? MODULE : atoi(WebServer->arg("m"+String(x)).c_str());
+        Settings.UserTimers[x].relay = (!strlen(WebServer->arg("r"+String(x)).c_str())) ? MODULE : atoi(WebServer->arg("r"+String(x)).c_str());
+        Settings.UserTimers[x].flags.oneshot = WebServer->hasArg("o"+String(x));
+
+        Settings.UserTimers[x].days=0;
+        if (WebServer->hasArg("e"+String(11+x*10)))
+          Settings.UserTimers[x].days += 0x01;
+          if (WebServer->hasArg("e"+String(12+x*10)))
+            Settings.UserTimers[x].days += 0x02;
+            if (WebServer->hasArg("e"+String(13+x*10)))
+              Settings.UserTimers[x].days += 0x04;
+              if (WebServer->hasArg("e"+String(14+x*10)))
+                Settings.UserTimers[x].days += 0x08;
+                if (WebServer->hasArg("e"+String(15+x*10)))
+                  Settings.UserTimers[x].days += 0x10;
+                  if (WebServer->hasArg("e"+String(16+x*10)))
+                    Settings.UserTimers[x].days += 0x20;
+                    if (WebServer->hasArg("e"+String(17+x*10)))
+                      Settings.UserTimers[x].days += 0x40;
+
+       }
+    #endif
+    #endif
+  break;
   case 1:
     WebGetArg("h", tmp, sizeof(tmp));
     strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
@@ -1363,12 +1582,12 @@ void HandleUploadLoop()
       if (Settings.flag.mqtt_enabled) {
         MqttClient.disconnect();
       }
-#ifdef ESP8266      
+#ifdef ESP8266
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
 #endif
 #ifdef ESP32
       uint32_t maxSketchSpace = UPDATE_SIZE_UNKNOWN;
-#endif      
+#endif
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
         upload_error = 2;
         return;
@@ -1393,13 +1612,13 @@ void HandleUploadLoop()
           return;
         }
         uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
-#ifdef ESP8266        
+#ifdef ESP8266
         if(bin_flash_size > ESP.getFlashChipRealSize()) {
           upload_error = 4;
           return;
         }
         upload.buf[2] = 3;  // Force DOUT - ESP8285
-#endif        
+#endif
 #ifdef ESP32
         if(bin_flash_size > ESP.getFlashChipSize()) {
           upload_error = 4;
@@ -1713,15 +1932,15 @@ void HandleInformation()
 
   func += F("}1}2&nbsp;");  // Empty line
   func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
-#ifdef ESP8266  
+#ifdef ESP8266
   func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
   func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");
-#endif  
+#endif
   func += F("}1" D_PROGRAM_FLASH_SIZE "}2"); func += String(ESP.getFlashChipSize() / 1024); func += F("kB");
-#ifdef ESP8266  
+#ifdef ESP8266
   func += F("}1" D_PROGRAM_SIZE "}2"); func += String(ESP.getSketchSize() / 1024); func += F("kB");
   func += F("}1" D_FREE_PROGRAM_SPACE "}2"); func += String(ESP.getFreeSketchSpace() / 1024); func += F("kB");
-#endif  
+#endif
 
 #ifdef ESP32
 #warning "Not ported"

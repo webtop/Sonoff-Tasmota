@@ -239,4 +239,10 @@
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
 #endif
 
+#define USE_USERTIMERS
+#define USE_USERTIMERSWEB            // view user timers on WEB
+#define MAX_USERTIMERS       16      // fixed configuration memory max size , do not change it
+#define USED_USERTIMERS      8       // realy used timers 1 to 16
+#define MQTT_SENSOR_RETAIN     1
+
 #endif  // _USER_CONFIG_H_

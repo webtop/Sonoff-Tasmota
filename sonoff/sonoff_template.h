@@ -37,8 +37,8 @@ enum UserSelectablePins {
   GPIO_SWT4,
   GPIO_SWT5,
   GPIO_SWT6,
-  GPIO_SWT7,  
-  GPIO_SWT8, 
+  GPIO_SWT7,
+  GPIO_SWT8,
   GPIO_KEY1,           // Button usually connected to GPIO0
   GPIO_KEY2,
   GPIO_KEY3,
@@ -139,7 +139,7 @@ const char kSensorNames[] PROGMEM =
 
 // Supported hardware modules
 enum SupportedModules {
-#ifdef ESP8266  
+#ifdef ESP8266
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_SV,
@@ -212,7 +212,7 @@ typedef struct MYTMPLT {
 } mytmplt;
 
 const uint8_t kNiceList[MAXMODULE] PROGMEM = {
-#ifdef ESP8266  
+#ifdef ESP8266
   SONOFF_BASIC,
   SONOFF_RF,
   SONOFF_TH,
@@ -257,31 +257,32 @@ const uint8_t kNiceList[MAXMODULE] PROGMEM = {
 #endif
 #ifdef ESP32
   WEMOS
-#endif   
+#endif
 };
 
 // Default module settings
 const mytmplt kModules[MAXMODULE] PROGMEM = {
-#ifdef ESP8266  
+#ifdef ESP8266
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
-     GPIO_KEY1,        // GPIO00 Button
-     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,                // GPIO02
-     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     GPIO_USER,        // GPIO04 Optional sensor
-     0,                // GPIO05
-     0,                // GPIO06 (SD_CLK   Flash)
-     0,                // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
-     0,                // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
-     0,                // GPIO09 (SD_DATA2 Flash QIO)
-     0,                // GPIO10 (SD_DATA3 Flash QIO)
-     0,                // GPIO11 (SD_CMD   Flash)
-     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
-     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
-     GPIO_USER,        // GPIO14 Optional sensor
-     0,                // GPIO15
-     0,                // GPIO16
-     0                 // ADC0 Analog input
+  GPIO_KEY1,        // GPIO00 Button
+  GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+  0,                // GPIO02
+  GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+  GPIO_USER,        // GPIO04 Optional sensor
+  0,                // GPIO05
+  0,                // GPIO06 (SD_CLK   Flash)
+  0,                // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+  0,                // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+  0,                // GPIO09 (SD_DATA2 Flash QIO)
+  0,                // GPIO10 (SD_DATA3 Flash QIO)
+  0,                // GPIO11 (SD_CMD   Flash)
+  GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+  GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+  GPIO_DHT22,        // GPIO14 Optional sensor
+  0,                // GPIO15
+  0,                // GPIO16
+  0                 // ADC0 Analog input
+
   },
   { "Sonoff RF",       // Sonoff RF (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
@@ -337,15 +338,18 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0
   },
   { "Sonoff Pow",      // Sonoff Pow (ESP8266)
-     GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0, 0,
-     GPIO_HLW_SEL,     // GPIO05 HLW8012 Sel output
-     0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
-     GPIO_HLW_CF1,     // GPIO13 HLW8012 CF1 voltage / current
-     GPIO_HLW_CF,      // GPIO14 HLW8012 CF power
-     GPIO_LED1,        // GPIO15 Green Led (0 = On, 1 = Off)
-     0, 0
+  GPIO_KEY1,        // GPIO00 Button
+  GPIO_USER,
+  GPIO_USER,
+  GPIO_DHT22,
+  GPIO_USER,
+  GPIO_HLW_SEL,     // GPIO05 HLW8012 Sel output
+  0, 0, 0, 0, 0, 0, // Flash connection
+  GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+  GPIO_HLW_CF1,     // GPIO13 HLW8012 CF1 voltage / current
+  GPIO_HLW_CF,      // GPIO14 HLW8012 CF power
+  GPIO_LED1,        // GPIO15 Green Led (0 = On, 1 = Off)
+  0, 0
   },
   { "Sonoff 4CH",      // Sonoff 4CH (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
@@ -851,7 +855,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
       GPIO_USER,  //35      I   NO PULLUP       GPIO35, ADC1_CH7, RTC_GPIO5
       GPIO_USER,  //36      I   NO PULLUP       GPIO36, SENSOR_VP, ADC_H, ADC1_CH0, RTC_GPIO0
       0,          //37          NO PULLUP
-      0,          //38          NO PULLUP 
+      0,          //38          NO PULLUP
       GPIO_USER   //39      I   NO PULLUP       GPIO39, SENSOR_VN, ADC1_CH3, ADC_H, RTC_GPIO3
   }
 #endif

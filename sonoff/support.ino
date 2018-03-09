@@ -1623,6 +1623,29 @@ void AddLogSerial(byte loglevel)
   AddLogSerial(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
+#ifdef USE_USERTIMERS
+#ifdef USE_USERTIMERSWEB
+uint16_t MakeValidTime(char* str)
+{
+
+    uint16_t i = 0;
+    uint16_t g =0;
+    char godz1[6];
+    for(i=0;i<5;i++)
+      {
+        if (str[i] != ':')
+          godz1[g++]=str[i];
+      }
+     godz1[g]=0;
+      i=atoi(godz1);
+      return i;
+
+}
+
+#endif
+#endif
+
+
 /*********************************************************************************************\
  *
 \*********************************************************************************************/
