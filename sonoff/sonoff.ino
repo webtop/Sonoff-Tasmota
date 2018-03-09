@@ -2283,13 +2283,10 @@ void ButtonHandler()
         }
         dual_button_code = 0;
       }
-<<<<<<< HEAD
-      } else
-#endif
-=======
+
       } else 
 #endif         
->>>>>>> a039b51e0d9a73e52c114a77e0e3c0846a56e10e
+
     {
       if ((pin[GPIO_KEY1 +button_index] < 99) && !blockgpio0) {
         button_present = 1;

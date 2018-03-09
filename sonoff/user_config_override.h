@@ -124,7 +124,7 @@
 
 
 
-<<<<<<< HEAD
+
 #ifdef USE_DOMOTICZ
 #undef USE_DOMOTICZ
 #endif
@@ -265,9 +265,6 @@
 #endif
 
 
-
-=======
->>>>>>> a039b51e0d9a73e52c114a77e0e3c0846a56e10e
 #ifdef ESP32
 #undef USE_ADC_VCC    // Needs to be ported
 #undef USE_IR_REMOTE  // IRremoteESP8266 needs to be ported
@@ -276,9 +273,6 @@
 #define SNFBRIDGE
 #define USE_ENERGY_SENSOR
 #endif
-<<<<<<< HEAD
 
-=======
->>>>>>> a039b51e0d9a73e52c114a77e0e3c0846a56e10e
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
