@@ -1,6 +1,7 @@
 # ESP32
 
 ESP32 port of Tasmota.
+<<<<<<< HEAD
 Prepared for Wemos ESP32.
 
 ## Working (Tested)
@@ -87,6 +88,8 @@ Additionally add:
 In code there are marked parts with #warning
 
 # ESP8266
+=======
+>>>>>>> aef23fbcafdfc230003746aec05e2da58334149d
 
 ## Sonoff-Tasmota
 Provide ESP8266 based Sonoff by [iTead Studio](https://www.itead.cc/) and ElectroDragon IoT Relay with Serial, Web and MQTT control allowing 'Over the Air' or OTA firmware updates using Arduino IDE.
