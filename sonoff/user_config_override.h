@@ -45,7 +45,9 @@
 #undef USE_ADC_VCC // Needs to be ported
 #undef USE_IR_REMOTE // IRremoteESP8266 needs to be ported
 #undef SNFBRIDGE // No commercial device, no sense porting
-#else
+#endif
+
+#ifdef ESP8266
 #define SNFBRIDGE
 #define USE_ENERGY_SENSOR
 #endif
