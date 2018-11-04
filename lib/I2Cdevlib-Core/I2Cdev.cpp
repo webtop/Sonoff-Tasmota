@@ -48,6 +48,11 @@ THE SOFTWARE.
 // Tasmota fixes for esp8266-core v2.4.0-rc2
 #define i2min(a,b) ((a)<(b)?(a):(b))
 
+#ifndef BUFFER_LENGTH
+// band-aid fix for platforms without Wire-defined BUFFER_LENGTH (removed from some official implementations)
+#define BUFFER_LENGTH 32
+#endif
+
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 
     #ifdef I2CDEV_IMPLEMENTATION_WARNINGS

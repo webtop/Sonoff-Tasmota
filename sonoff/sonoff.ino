@@ -52,6 +52,7 @@
 
 #ifdef ESP32
 #include <ESP32Ticker.h>
+#define wps_cb_status int
 #endif
 
 #ifdef ESP8266
@@ -281,7 +282,7 @@ char* GetMqttClient(char* output, const char* input, int size)
         }
       } else {
         if (strchr(token, 'd')) {
-          snprintf_P(output, size, PSTR("%s%d"), output, ESP.getChipId());  // %d - full chip ID in dec
+          snprintf_P(output, size, PSTR("%s%llu"), output, (uint64_t)ESP.getChipId());  // %d - full chip ID in dec
           digits = 8;
         }
       }
@@ -3232,9 +3233,6 @@ void loop()
 #endif
 }
 
-#ifdef ESP32
-#define wps_cb_status int
-#endif
 
 #ifdef ESP32
 #warning "Analog write not ported"

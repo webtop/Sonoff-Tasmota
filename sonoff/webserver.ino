@@ -361,6 +361,15 @@ enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
 DNSServer *DnsServer;
 
 
+
+char *uint64_t_to_char(unsigned long long value)
+{
+    static char buf[1 + 8 * sizeof(unsigned long long)];
+    ultoa(value, buf, 10);
+    return buf;
+}
+
+
 #ifdef ESP8266
 
 ESP8266WebServer *WebServer;
@@ -1931,7 +1940,7 @@ void HandleInformation()
 #endif // USE_DISCOVERY
 
   func += F("}1}2&nbsp;");  // Empty line
-  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(ESP.getChipId());
+  func += F("}1" D_ESP_CHIP_ID "}2"); func += String(uint64_t_to_char(ESP.getChipId()));
 #ifdef ESP8266
   func += F("}1" D_FLASH_CHIP_ID "}2"); func += String(ESP.getFlashChipId());
   func += F("}1" D_FLASH_CHIP_SIZE "}2"); func += String(ESP.getFlashChipRealSize() / 1024); func += F("kB");

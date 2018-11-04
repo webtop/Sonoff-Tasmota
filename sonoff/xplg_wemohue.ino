@@ -428,7 +428,7 @@ void HandleUpnpEvent()
   else if(request.indexOf(F("GetBinaryState")) > 0){
     state_xml.replace(F("Set"), F("Get"));
   }
-  state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
+  state_xml.replace("{x1", String((int)bitRead(power, devices_present -1)));
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
 }
 

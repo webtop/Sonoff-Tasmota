@@ -336,13 +336,13 @@ void WebServer::sendContent(const String& content) {
     char * chunkSize = (char *)malloc(11);
     if(chunkSize){
       sprintf(chunkSize, "%x%s", len, footer);
-      _currentClient.write(chunkSize, strlen(chunkSize));
+      _currentClient.write((const uint8_t*)chunkSize, strlen(chunkSize));
       free(chunkSize);
     }
   }
-  _currentClient.write(content.c_str(), len);
+  _currentClient.write((const uint8_t*)content.c_str(), len);
   if(_chunked){
-    _currentClient.write(footer, 2);
+    _currentClient.write((const uint8_t*)footer, 2);
   }
 }
 
@@ -356,13 +356,13 @@ void WebServer::sendContent_P(PGM_P content, size_t size) {
     char * chunkSize = (char *)malloc(11);
     if(chunkSize){
       sprintf(chunkSize, "%x%s", size, footer);
-      _currentClient.write(chunkSize, strlen(chunkSize));
+      _currentClient.write((const uint8_t*)chunkSize, strlen(chunkSize));
       free(chunkSize);
     }
   }
   _currentClient.write_P(content, size);
   if(_chunked){
-    _currentClient.write(footer, 2);
+    _currentClient.write((const uint8_t*)footer, 2);
   }
 }
 
